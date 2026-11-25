@@ -1,0 +1,4 @@
+# コイノニアのサイト: ビルドなし、一番上のフォルダをそのまま公開
+[build]
+  publish = "."
+  functions = "netlify/functions"

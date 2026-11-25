@@ -1,5 +1,5 @@
 // モフ博士のうさぎクイズ: オフラインでも遊べるようにするためのキャッシュ
-const VERSION = "usagi-quiz-v7";
+const VERSION = "usagi-quiz-v8";
 const CORE = ["./", "./index.html", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-32.png"];
 
@@ -13,6 +13,8 @@ self.addEventListener("fetch", e => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+  // ランキング(/api/): いつもネットから取る
+  if (url.pathname.startsWith("/api/")) return;
   // ページ本体: ネット優先(更新をすぐ反映)、つながらなければキャッシュ
   if (req.mode === "navigate") {
     e.respondWith(fetch(req).then(res => { const copy = res.clone(); caches.open(VERSION).then(c => c.put("./index.html", copy)); return res; })

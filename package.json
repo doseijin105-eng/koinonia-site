@@ -1,0 +1,8 @@
+{
+  "name": "koinonia-site",
+  "private": true,
+  "description": "コイノニアのサイト(Netlify)。usagi-quiz のランキング用に Netlify Functions を使います。",
+  "dependencies": {
+    "@netlify/blobs": "^11.1.11"
+  }
+}

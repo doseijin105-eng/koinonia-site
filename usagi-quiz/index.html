@@ -1293,7 +1293,28 @@ function initBoard(){
         }};
       return Board;
     }
-    if(!(window.claude && typeof window.claude.use==="function")) return Board;
+    if(!(window.claude && typeof window.claude.use==="function")){
+      /* ウェブサイト版: Netlify Functions(/api/usagi-scores) */
+      if(!/^https?:$/.test(location.protocol)) return Board;
+      const api = "/api/usagi-scores";
+      const list = async b=>{
+        const r = await fetch(`${api}?board=${encodeURIComponent(b)}`,{cache:"no-store"});
+        if(!r.ok) throw new Error("load");
+        const rows = await r.json();
+        return rows.map(x=>({name:x.name,score:x.score,at:x.created_at,me:x.name===store.get("nick","")}));
+      };
+      try{ await list("trivia"); }catch(e){ return Board; }
+      Board = {available:true, canPost:true, kind:"web",
+        top: async b=>(await list(b)).slice(0,20),
+        submit: async (b,nick,score)=>{
+          const r = await fetch(api,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({board:b,name:nick,score})});
+          if(!r.ok) throw new Error("post");
+          const res = await r.json();
+          const all = await list(b); const i = all.findIndex(x=>x.name===nick);
+          return {improved:res.improved!==false, rank:i+1, best:i>=0?all[i].score:score};
+        }};
+      return Board;
+    }
     /* claude.ai 版: db capability */
     const db = await window.claude.use("db"); if(!db) return Board;
     const user = await window.claude.use("user");
