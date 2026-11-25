@@ -1,0 +1,19 @@
+.book-intro{max-width:680px;margin:0 auto 24px;line-height:1.9;color:#526867}
+.book-tabs{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:25px}
+.book-tabs .btn,.word-card .btn,.book-pagination .btn,#screen-word-book>.btn{border:2px solid #b9d4c9;border-radius:14px;background:#fff8dc;color:#294e46;padding:12px 18px;min-height:48px;font:inherit;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #dae6dd}
+.book-tabs .btn:hover,.word-card .btn:hover,.book-pagination .btn:hover{background:#e7f3dc}.book-pagination .btn:disabled{opacity:.45;cursor:default}
+.book-tabs .btn[aria-pressed="true"]{background:#d9f0db;border-color:#6ca983;color:#214b42}
+.book-search-label{display:block;text-align:left;margin:0 0 8px;font-size:17px;font-weight:700}
+.book-search{width:100%;min-height:52px;box-sizing:border-box;border:2px solid #bdd5d2;border-radius:14px;background:#fff;padding:12px 16px;font:inherit;color:#294c49}
+.book-count{font-size:17px;text-align:left;margin:18px 0;color:#526867}
+.word-book-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;text-align:left}
+.word-card{min-width:0;padding:22px;border:1px solid #ded9c0;border-radius:20px;background:#fffdf4;display:flex;flex-direction:column;align-items:flex-start}
+.word-kicker{color:#477774;font-size:15px;font-weight:700}
+.book-verse{font-size:21px;line-height:2.25;margin:18px 0;overflow-wrap:anywhere;color:#344d46}
+.book-verse rt{font-size:.58em}
+.thinker-word{background:#fff7e4}.quote-kind{display:inline-block;margin-top:10px;padding:4px 10px;border-radius:12px;background:#f4e9ca;color:#675333;font-size:14px;font-weight:700}.quote-note,.quote-source{font-size:15px;line-height:1.8;margin:0 0 15px;color:#655c49}.quote-source a{display:inline-block;color:#3c6b61;text-decoration:underline;padding:8px 0}
+.word-card .btn{margin-top:auto;font-size:16px;align-self:flex-end;min-height:48px}
+.anime-word{background:#eff7ff;border-color:#c4d8ed}.anime-word .quote-kind{background:#dceafb;color:#385473}.anime-word .quote-note,.anime-word .quote-source{color:#4d6074}
+.cook-word{background:#f1f9f6}.cook-word-text{white-space:pre-wrap;font-size:19px;line-height:1.85;color:#344d46}
+.book-pagination{display:flex;align-items:center;justify-content:center;gap:18px;margin:28px 0}.book-pagination .btn{margin:0}.book-empty{grid-column:1/-1;padding:30px;text-align:center}
+@media(max-width:620px){.word-book-list{grid-template-columns:1fr}.word-card{padding:18px}.book-verse{font-size:20px}.book-pagination{gap:8px;font-size:15px}.book-pagination .btn{padding:12px 16px}.book-search-label{font-size:16px}}
