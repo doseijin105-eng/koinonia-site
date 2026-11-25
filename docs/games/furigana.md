@@ -17,7 +17,7 @@
 python3 tools/furigana/build_furi.py /tmp/usagi_dict.json usagi-quiz/index.html
 python3 tools/furigana/make_furi_js.py /tmp/usagi_dict.json tools/furigana/override_usagi-quiz.json usagi-quiz/furigana.js
 
-python3 tools/furigana/build_furi.py /tmp/typing_dict.json typing/index.html typing/*.js
+python3 tools/furigana/build_furi.py /tmp/typing_dict.json typing/index.html $(ls typing/*.js | grep -v furigana.js)
 python3 tools/furigana/make_furi_js.py /tmp/typing_dict.json tools/furigana/override_typing.json typing/furigana.js
 ```
 

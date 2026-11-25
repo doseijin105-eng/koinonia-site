@@ -12,7 +12,7 @@
   var last = function(n){ n=String(n).replace(/[０-９]/g,function(d){return String.fromCharCode(d.charCodeAt(0)-0xFEE0);}); return +n.slice(-1); };
   var p3 = function(h,b,p){ return function(n){ var d=last(n); return [1,6,8,0].indexOf(d)>=0?p:d===3?b:h; }; };
   var COUNTER = [
-    ["時間","じかん"],["週間","しゅうかん"],["か月","げつ"],["ヶ月","げつ"],["種類","しゅるい"],["文字","もじ"],["問目","もんめ"],["回目","かいめ"],["番目","ばんめ"],["年間","ねんかん"],["日間","にちかん"],["分間",function(n){var d=last(n);return [1,3,4,6,8,0].indexOf(d)>=0?"ぷんかん":"ふんかん";}],["秒間","びょうかん"],
+    ["時間","じかん"],["週間","しゅうかん"],["か月","げつ"],["ヶ月","げつ"],["種類","しゅるい"],["文字","もじ"],["問目","もんめ"],["回目","かいめ"],["番目","ばんめ"],["年間","ねんかん"],["年代","ねんだい"],["日間",function(n){n=+String(n).replace(/[０-９]/g,function(d){return String.fromCharCode(d.charCodeAt(0)-0xFEE0);});return ((n>=2&&n<=10)||n===14||n===20||n===24?"か":"にち")+"かん";}],["色型","しょくがた"],["分間",function(n){var d=last(n);return [1,3,4,6,8,0].indexOf(d)>=0?"ぷんかん":"ふんかん";}],["秒間","びょうかん"],
     ["本",p3("ほん","ぼん","ぽん")],["匹",p3("ひき","びき","ぴき")],["杯",p3("はい","ばい","ぱい")],["分",function(n){var d=last(n);return [1,3,4,6,8,0].indexOf(d)>=0?"ぷん":"ふん";}],
     ["日",function(n){n=+String(n).replace(/[０-９]/g,function(d){return String.fromCharCode(d.charCodeAt(0)-0xFEE0);});return (n>=2&&n<=10)||n===14||n===20||n===24?"か":"にち";}],
     ["人",function(n){n=+String(n).replace(/[０-９]/g,function(d){return String.fromCharCode(d.charCodeAt(0)-0xFEE0);});return n===1||n===2?"り":"にん";}],
@@ -32,6 +32,8 @@
           if(hit){ var r=typeof hit[1]==="function"?hit[1](m[0]):hit[1]; out+= r? rb(hit[0],r) : esc(hit[0]); i+=hit[0].length; changed=true; continue; }
         }
       }
+      // カタカナのあとの「人」「島」「内」(アメリカ人、スマトラ島、テーマ内)
+      if((ch==="人"||ch==="島"||ch==="内")&&i>0&&/[ァ-ヶー]/.test(text[i-1])&&!(byFirst.get(ch)||[]).some(function(k){return k.length>1&&text.startsWith(k,i);})){ out+=rb(ch,{"人":"じん","島":"とう","内":"ない"}[ch]); i++; changed=true; continue; }
       var list=byFirst.get(ch), found=null;
       if(list){ for(var j=0;j<list.length;j++){ if(text.startsWith(list[j],i)){ found=list[j]; break; } } }
       if(found){ D[found].forEach(function(s){ out+= s[1]? rb(s[0],s[1]) : esc(s[0]); }); i+=found.length; changed=true; continue; }

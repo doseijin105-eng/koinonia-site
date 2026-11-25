@@ -46,8 +46,10 @@ d={};conf=[]
 for k,c in cnt.items():
     best=c.most_common(1)[0][0]; d[k]=json.loads(best)
     if len(c)>1: conf.append((k,dict(c)))
+best={}
 for (k,r),c in RUBY.items():
-    if re.fullmatch(K+'+',k) and len(k)>=2: d[k]=[[k,r]]
+    if re.fullmatch(K+'+',k) and len(k)>=2 and c>best.get(k,('',0))[1]: best[k]=(r,c)
+for k,(r,c) in best.items(): d[k]=[[k,r]]
 json.dump(d,open(out,'w',encoding='utf-8'),ensure_ascii=False,indent=0)
 print(len(d),'keys', len(conf),'conflicts', len(MERGED),'merged')
 open(out+'.merged.txt','w',encoding='utf-8').write('\n'.join(k+'\t'+''.join(a+('('+b+')' if b else '') for a,b in d[k]) for k in sorted(MERGED)))

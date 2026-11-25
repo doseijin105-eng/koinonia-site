@@ -97,7 +97,7 @@ window.QuestContent={
       "theme": "encourage",
       "ref": "マタイ 11:28",
       "jp": "すべて疲れた人、重荷を負っている人はわたしのもとに来なさい。",
-      "ruby": "すべて<ruby>疲<rt>つか</rt></ruby>れた<ruby>人<rt>ひ</rt></ruby>、<ruby>重荷<rt>とおもに</rt></ruby>を<ruby>負<rt>お</rt></ruby>っている<ruby>人<rt>ひと</rt></ruby>はわたしのもとに<ruby>来<rt>き</rt></ruby>なさい。",
+      "ruby": "すべて<ruby>疲<rt>つか</rt></ruby>れた<ruby>人<rt>ひと</rt></ruby>、<ruby>重荷<rt>おもに</rt></ruby>を<ruby>負<rt>お</rt></ruby>っている<ruby>人<rt>ひと</rt></ruby>はわたしのもとに<ruby>来<rt>き</rt></ruby>なさい。",
       "romaji": "subetetsukaretahito,omoniwootteiruhitohawatashinomotonikinasai."
     },
     {
@@ -412,7 +412,7 @@ window.QuestContent={
       "theme": "encourage",
       "ref": "ヨシュア記 1:9",
       "jp": "あなたの神、主が、あなたとともにおられるからである。",
-      "ruby": "あなたの<ruby>神<rt>か</rt></ruby>、<ruby>主<rt>みしゅ</rt></ruby>が、あなたとともにおられるからである。",
+      "ruby": "あなたの<ruby>神<rt>かみ</rt></ruby>、<ruby>主<rt>しゅ</rt></ruby>が、あなたとともにおられるからである。",
       "romaji": "anatanokami,shuga,anatatotomoniorarerukaradearu."
     },
     {
@@ -426,7 +426,7 @@ window.QuestContent={
       "theme": "love",
       "ref": "申命記 6:5",
       "jp": "あなたの神、主を愛しなさい。",
-      "ruby": "あなたの<ruby>神<rt>か</rt></ruby>、<ruby>主<rt>みしゅ</rt></ruby>を<ruby>愛<rt>あい</rt></ruby>しなさい。",
+      "ruby": "あなたの<ruby>神<rt>かみ</rt></ruby>、<ruby>主<rt>しゅ</rt></ruby>を<ruby>愛<rt>あい</rt></ruby>しなさい。",
       "romaji": "anatanokami,shuwoaishinasai."
     },
     {
@@ -510,7 +510,7 @@ window.QuestContent={
       "theme": "easter",
       "ref": "第一コリント 15:20",
       "jp": "しかし、今やキリストは、眠った者の初穂として",
-      "ruby": "しかし、<ruby>今<rt>いま</rt></ruby>やキリストは、<ruby>眠<rt>ねむ</rt></ruby>った<ruby>者<rt>も</rt></ruby>の<ruby>初穂<rt>のはつほ</rt></ruby>として",
+      "ruby": "しかし、<ruby>今<rt>いま</rt></ruby>やキリストは、<ruby>眠<rt>ねむ</rt></ruby>った<ruby>者<rt>もの</rt></ruby>の<ruby>初穂<rt>はつほ</rt></ruby>として",
       "romaji": "shikashi,imayakirisutoha,nemuttamononohatsuhotoshite"
     },
     {
@@ -566,7 +566,7 @@ window.QuestContent={
       "theme": "encourage",
       "ref": "ヘブル 11:1",
       "jp": "信仰は、望んでいることを保証し、目に見えないものを確信させるものです。",
-      "ruby": "<ruby>信仰<rt>しんこう</rt></ruby>は、<ruby>望<rt>のぞ</rt></ruby>んでいることを<ruby>保証<rt>ほ</rt></ruby>し、<ruby>目<rt>ょうしめ</rt></ruby>に<ruby>見<rt>み</rt></ruby>えないものを<ruby>確信<rt>かくしん</rt></ruby>させるものです。",
+      "ruby": "<ruby>信仰<rt>しんこう</rt></ruby>は、<ruby>望<rt>のぞ</rt></ruby>んでいることを<ruby>保証<rt>ほしょう</rt></ruby>し、<ruby>目<rt>め</rt></ruby>に<ruby>見<rt>み</rt></ruby>えないものを<ruby>確信<rt>かくしん</rt></ruby>させるものです。",
       "romaji": "shinnkouha,nozonndeirukotowohoshoushi,menimienaimonowokakushinnsaserumonodesu."
     },
     {
@@ -622,14 +622,14 @@ window.QuestContent={
       "theme": "encourage",
       "ref": "申命記 6:4",
       "jp": "聞け、イスラエルよ。主は私たちの神。主は唯一である。",
-      "ruby": "<ruby>聞<rt>き</rt></ruby>け、イスラエルよ。<ruby>主<rt>しゅ</rt></ruby>は<ruby>私<rt>わたし</rt></ruby>たちの<ruby>神<rt>か</rt></ruby>。<ruby>主<rt>みしゅ</rt></ruby>は<ruby>唯一<rt>ゆいいつ</rt></ruby>である。",
+      "ruby": "<ruby>聞<rt>き</rt></ruby>け、イスラエルよ。<ruby>主<rt>しゅ</rt></ruby>は<ruby>私<rt>わたし</rt></ruby>たちの<ruby>神<rt>かみ</rt></ruby>。<ruby>主<rt>しゅ</rt></ruby>は<ruby>唯一<rt>ゆいいつ</rt></ruby>である。",
       "romaji": "kike,isuraeruyo.shuhawatashitachinokami.shuhayuiitsudearu."
     },
     {
       "theme": "love",
       "ref": "申命記 6:5",
       "jp": "あなたは心を尽くし、いのちを尽くし、力を尽くして、あなたの神、主を愛しなさい。",
-      "ruby": "あなたは<ruby>心<rt>こころ</rt></ruby>を<ruby>尽<rt>つ</rt></ruby>くし、いのちを<ruby>尽<rt>つ</rt></ruby>くし、<ruby>力<rt>ちから</rt></ruby>を<ruby>尽<rt>つ</rt></ruby>くして、あなたの<ruby>神<rt>か</rt></ruby>、<ruby>主<rt>みしゅ</rt></ruby>を<ruby>愛<rt>あい</rt></ruby>しなさい。",
+      "ruby": "あなたは<ruby>心<rt>こころ</rt></ruby>を<ruby>尽<rt>つ</rt></ruby>くし、いのちを<ruby>尽<rt>つ</rt></ruby>くし、<ruby>力<rt>ちから</rt></ruby>を<ruby>尽<rt>つ</rt></ruby>くして、あなたの<ruby>神<rt>かみ</rt></ruby>、<ruby>主<rt>しゅ</rt></ruby>を<ruby>愛<rt>あい</rt></ruby>しなさい。",
       "romaji": "anatahakokorowotsukushi,inochiwotsukushi,chikarawotsukushite,anatanokami,shuwoaishinasai."
     },
     {
@@ -657,8 +657,8 @@ window.QuestContent={
       "theme": "encourage",
       "ref": "詩篇 1:1",
       "jp": "いかに幸いなことか。悪者のはかりごとに歩まず、",
-      "ruby": "いかに<ruby>幸<rt>さいわ</rt></ruby>いなことか。<ruby>悪者<rt>わるも</rt></ruby>のはかりごとに<ruby>歩<rt>あゆ</rt></ruby>まず、",
-      "romaji": "ikanisaiwainakotoka.warumonohakarigotoniayumazu,"
+      "ruby": "いかに<ruby>幸<rt>さいわ</rt></ruby>いなことか。<ruby>悪者<rt>わるもの</rt></ruby>のはかりごとに<ruby>歩<rt>あゆ</rt></ruby>まず、",
+      "romaji": "ikanisaiwainakotoka.warumononohakarigotoniayumazu,"
     },
     {
       "theme": "encourage",
@@ -671,7 +671,7 @@ window.QuestContent={
       "theme": "encourage",
       "ref": "詩篇 27:1",
       "jp": "主は私の光、私の救い。だれを私は恐れよう。",
-      "ruby": "<ruby>主<rt>しゅ</rt></ruby>は<ruby>私<rt>わたし</rt></ruby>の<ruby>光<rt>ひ</rt></ruby>、<ruby>私<rt>かりわたし</rt></ruby>の<ruby>救<rt>すく</rt></ruby>い。だれを<ruby>私<rt>わたし</rt></ruby>は<ruby>恐<rt>おそ</rt></ruby>れよう。",
+      "ruby": "<ruby>主<rt>しゅ</rt></ruby>は<ruby>私<rt>わたし</rt></ruby>の<ruby>光<rt>ひかり</rt></ruby>、<ruby>私<rt>わたし</rt></ruby>の<ruby>救<rt>すく</rt></ruby>い。だれを<ruby>私<rt>わたし</rt></ruby>は<ruby>恐<rt>おそ</rt></ruby>れよう。",
       "romaji": "shuhawatashinohikari,watashinosukui.darewowatashihaosoreyou."
     },
     {
@@ -685,7 +685,7 @@ window.QuestContent={
       "theme": "encourage",
       "ref": "詩篇 46:1",
       "jp": "神は私たちの避け所、また力。苦難のとき、いと近き助け。",
-      "ruby": "<ruby>神<rt>かみ</rt></ruby>は<ruby>私<rt>わたし</rt></ruby>たちの<ruby>避<rt>さ</rt></ruby>け<ruby>所<rt>どころ</rt></ruby>、また<ruby>力<rt>ち</rt></ruby>。<ruby>苦難<rt>からくなん</rt></ruby>のとき、いと<ruby>近<rt>ちか</rt></ruby>き<ruby>助<rt>たす</rt></ruby>け。",
+      "ruby": "<ruby>神<rt>かみ</rt></ruby>は<ruby>私<rt>わたし</rt></ruby>たちの<ruby>避<rt>さ</rt></ruby>け<ruby>所<rt>どころ</rt></ruby>、また<ruby>力<rt>ちから</rt></ruby>。<ruby>苦難<rt>くなん</rt></ruby>のとき、いと<ruby>近<rt>ちか</rt></ruby>き<ruby>助<rt>たす</rt></ruby>け。",
       "romaji": "kamihawatashitachinosakedokoro,matachikara.kunannnotoki,itochikakitasuke."
     },
     {
@@ -790,7 +790,7 @@ window.QuestContent={
       "theme": "encourage",
       "ref": "ゼパニヤ書 3:17",
       "jp": "あなたの神、主は、あなたのただ中におられる。救いをもたらす勇士だ。",
-      "ruby": "あなたの<ruby>神<rt>か</rt></ruby>、<ruby>主<rt>みしゅ</rt></ruby>は、あなたのただ<ruby>中<rt>なか</rt></ruby>におられる。<ruby>救<rt>すく</rt></ruby>いをもたらす<ruby>勇士<rt>ゆうし</rt></ruby>だ。",
+      "ruby": "あなたの<ruby>神<rt>かみ</rt></ruby>、<ruby>主<rt>しゅ</rt></ruby>は、あなたのただ<ruby>中<rt>なか</rt></ruby>におられる。<ruby>救<rt>すく</rt></ruby>いをもたらす<ruby>勇士<rt>ゆうし</rt></ruby>だ。",
       "romaji": "anatanokami,shuha,anatanotadanakaniorareru.sukuiwomotarasuyuushida."
     },
     {
@@ -811,7 +811,7 @@ window.QuestContent={
       "theme": "love",
       "ref": "マタイの福音書 22:37",
       "jp": "あなたは心を尽くし、いのちを尽くし、知性を尽くして、あなたの神、主を愛しなさい。",
-      "ruby": "あなたは<ruby>心<rt>こころ</rt></ruby>を<ruby>尽<rt>つ</rt></ruby>くし、いのちを<ruby>尽<rt>つ</rt></ruby>くし、<ruby>知性<rt>ちせい</rt></ruby>を<ruby>尽<rt>つ</rt></ruby>くして、あなたの<ruby>神<rt>か</rt></ruby>、<ruby>主<rt>みしゅ</rt></ruby>を<ruby>愛<rt>あい</rt></ruby>しなさい。",
+      "ruby": "あなたは<ruby>心<rt>こころ</rt></ruby>を<ruby>尽<rt>つ</rt></ruby>くし、いのちを<ruby>尽<rt>つ</rt></ruby>くし、<ruby>知性<rt>ちせい</rt></ruby>を<ruby>尽<rt>つ</rt></ruby>くして、あなたの<ruby>神<rt>かみ</rt></ruby>、<ruby>主<rt>しゅ</rt></ruby>を<ruby>愛<rt>あい</rt></ruby>しなさい。",
       "romaji": "anatahakokorowotsukushi,inochiwotsukushi,chiseiwotsukushite,anatanokami,shuwoaishinasai."
     },
     {
@@ -930,7 +930,7 @@ window.QuestContent={
       "theme": "encourage",
       "ref": "詩篇 18:2",
       "jp": "主は私の巌、私の砦、私の救い主。",
-      "ruby": "<ruby>主<rt>しゅ</rt></ruby>は<ruby>私<rt>わたし</rt></ruby>の<ruby>巌<rt>い</rt></ruby>、<ruby>私<rt>わおわたし</rt></ruby>の<ruby>砦<rt>と</rt></ruby>、<ruby>私<rt>りでわたし</rt></ruby>の<ruby>救<rt>すく</rt></ruby>い<ruby>主<rt>ぬし</rt></ruby>。",
+      "ruby": "<ruby>主<rt>しゅ</rt></ruby>は<ruby>私<rt>わたし</rt></ruby>の<ruby>巌<rt>いわお</rt></ruby>、<ruby>私<rt>わたし</rt></ruby>の<ruby>砦<rt>とりで</rt></ruby>、<ruby>私<rt>わたし</rt></ruby>の<ruby>救<rt>すく</rt></ruby>い<ruby>主<rt>ぬし</rt></ruby>。",
       "romaji": "shuhawatashinoiwao,watashinotoride,watashinosukuinushi."
     },
     {
@@ -2074,7 +2074,7 @@ window.QuestContent={
       "ref": "マルティン・ルター",
       "jp": "たとえ明日、世界が滅亡しようとも、今日私はリンゴの木を植える。",
       "kana": "たとえあした、せかいがめつぼうしようとも、きょうわたしはりんごのきをうえる。",
-      "ruby": "たとえ<ruby>明日<rt>あ</rt></ruby>、<ruby>世界<rt>したせかい</rt></ruby>が<ruby>滅亡<rt>めつぼう</rt></ruby>しようとも、<ruby>今日私<rt>きょうわたし</rt></ruby>はリンゴの<ruby>木<rt>き</rt></ruby>を<ruby>植<rt>う</rt></ruby>える。",
+      "ruby": "たとえ<ruby>明日<rt>あした</rt></ruby>、<ruby>世界<rt>せかい</rt></ruby>が<ruby>滅亡<rt>めつぼう</rt></ruby>しようとも、<ruby>今日私<rt>きょうわたし</rt></ruby>はリンゴの<ruby>木<rt>き</rt></ruby>を<ruby>植<rt>う</rt></ruby>える。",
       "romaji": "tatoeashita,sekaigametsuboushiyoutomo,kyouwatashiharinngonokiwoueru.",
       "kind": "提供リスト・出典未確認",
       "work": "作者を確かめるための資料：ルターとリンゴの木",
@@ -2492,7 +2492,7 @@ window.QuestContent={
       "ref": "C.S.ルイス",
       "jp": "本当の謙遜とは、自分を低く考えることではなく、自分のことを考えるのを減らすことである。",
       "kana": "ほんとうのけんそんとは、じぶんをひくくかんがえることではなく、じぶんのことをかんがえるのをへらすことである。",
-      "ruby": "<ruby>本当<rt>ほんとう</rt></ruby>の<ruby>謙遜<rt>けんそん</rt></ruby>とは、<ruby>自分<rt>じぶん</rt></ruby>を<ruby>低<rt>ひ</rt></ruby>く<ruby>考<rt>くかんが</rt></ruby>えることではなく、<ruby>自分<rt>じぶん</rt></ruby>のことを<ruby>考<rt>かんが</rt></ruby>えるのを<ruby>減<rt>へ</rt></ruby>らすことである。",
+      "ruby": "<ruby>本当<rt>ほんとう</rt></ruby>の<ruby>謙遜<rt>けんそん</rt></ruby>とは、<ruby>自分<rt>じぶん</rt></ruby>を<ruby>低<rt>ひく</rt></ruby>く<ruby>考<rt>かんが</rt></ruby>えることではなく、<ruby>自分<rt>じぶん</rt></ruby>のことを<ruby>考<rt>かんが</rt></ruby>えるのを<ruby>減<rt>へ</rt></ruby>らすことである。",
       "romaji": "honntounokennsonntoha,jibunnwohikukukanngaerukotodehanaku,jibunnnokotowokanngaerunowoherasukotodearu.",
       "kind": "提供リスト・出典未確認",
       "work": "いただいたリスト 47番",
@@ -2764,7 +2764,7 @@ window.QuestContent={
       "ref": "内村鑑三",
       "jp": "金を遺すは下、仕事を遺すは中、人を遺すは上なり。",
       "kana": "かねをのこすはげ、しごとをのこすはちゅう、ひとをのこすはじょうなり。",
-      "ruby": "<ruby>金<rt>かね</rt></ruby>を<ruby>遺<rt>のこ</rt></ruby>すは<ruby>下<rt>げ</rt></ruby>、<ruby>仕事<rt>しごと</rt></ruby>を<ruby>遺<rt>のこ</rt></ruby>すは<ruby>中<rt>ち</rt></ruby>、<ruby>人<rt>ゅうひと</rt></ruby>を<ruby>遺<rt>のこ</rt></ruby>すは<ruby>上<rt>じょう</rt></ruby>なり。",
+      "ruby": "<ruby>金<rt>かね</rt></ruby>を<ruby>遺<rt>のこ</rt></ruby>すは<ruby>下<rt>げ</rt></ruby>、<ruby>仕事<rt>しごと</rt></ruby>を<ruby>遺<rt>のこ</rt></ruby>すは<ruby>中<rt>ちゅう</rt></ruby>、<ruby>人<rt>ひと</rt></ruby>を<ruby>遺<rt>のこ</rt></ruby>すは<ruby>上<rt>じょう</rt></ruby>なり。",
       "romaji": "kanewonokosuhage,shigotowonokosuhachuu,hitowonokosuhajounari.",
       "kind": "提供リスト・出典未確認",
       "work": "いただいたリスト 65番",
@@ -2972,7 +2972,7 @@ window.QuestContent={
       "ref": "イグナチオ・デ・ロヨラ",
       "jp": "すべての物事の中に神を見出しなさい。",
       "kana": "すべてのものごとのなかにかみをみいだしなさい。",
-      "ruby": "すべての<ruby>物事<rt>も</rt></ruby>の<ruby>中<rt>ごとのなか</rt></ruby>に<ruby>神<rt>かみ</rt></ruby>を<ruby>見出<rt>みいだ</rt></ruby>しなさい。",
+      "ruby": "すべての<ruby>物事<rt>ものごと</rt></ruby>の<ruby>中<rt>なか</rt></ruby>に<ruby>神<rt>かみ</rt></ruby>を<ruby>見出<rt>みいだ</rt></ruby>しなさい。",
       "romaji": "subetenomonogotononakanikamiwomiidashinasai.",
       "kind": "提供リスト・出典未確認",
       "work": "いただいたリスト 78番",
@@ -3276,7 +3276,7 @@ window.QuestContent={
       "ref": "A.W.トウザー",
       "jp": "私たちが神を求める時、実は神が私たちを先に求めておられるのだ。",
       "kana": "わたしたちがかみをもとめるとき、じつはかみがわたしたちをさきにもとめておられるのだ。",
-      "ruby": "<ruby>私<rt>わたし</rt></ruby>たちが<ruby>神<rt>かみ</rt></ruby>を<ruby>求<rt>もと</rt></ruby>める<ruby>時<rt>と</rt></ruby>、<ruby>実<rt>きじつ</rt></ruby>は<ruby>神<rt>かみ</rt></ruby>が<ruby>私<rt>わたし</rt></ruby>たちを<ruby>先<rt>さき</rt></ruby>に<ruby>求<rt>もと</rt></ruby>めておられるのだ。",
+      "ruby": "<ruby>私<rt>わたし</rt></ruby>たちが<ruby>神<rt>かみ</rt></ruby>を<ruby>求<rt>もと</rt></ruby>める<ruby>時<rt>とき</rt></ruby>、<ruby>実<rt>じつ</rt></ruby>は<ruby>神<rt>かみ</rt></ruby>が<ruby>私<rt>わたし</rt></ruby>たちを<ruby>先<rt>さき</rt></ruby>に<ruby>求<rt>もと</rt></ruby>めておられるのだ。",
       "romaji": "watashitachigakamiwomotomerutoki,jitsuhakamigawatashitachiwosakinimotometeorarerunoda.",
       "kind": "提供リスト・出典未確認",
       "work": "いただいたリスト 97番",
@@ -3500,7 +3500,7 @@ window.QuestContent={
       "ref": "アンドリュー・マーレー",
       "jp": "謙遜とは、自分を低く考えることではなく、自分から目を離して神を見上げることである。",
       "kana": "けんそんとは、じぶんをひくくかんがえることではなく、じぶんからめをはなしてかみをみあげることである。",
-      "ruby": "<ruby>謙遜<rt>けんそん</rt></ruby>とは、<ruby>自分<rt>じぶん</rt></ruby>を<ruby>低<rt>ひ</rt></ruby>く<ruby>考<rt>くかんが</rt></ruby>えることではなく、<ruby>自分<rt>じぶん</rt></ruby>から<ruby>目<rt>め</rt></ruby>を<ruby>離<rt>はな</rt></ruby>して<ruby>神<rt>かみ</rt></ruby>を<ruby>見上<rt>みあ</rt></ruby>げることである。",
+      "ruby": "<ruby>謙遜<rt>けんそん</rt></ruby>とは、<ruby>自分<rt>じぶん</rt></ruby>を<ruby>低<rt>ひく</rt></ruby>く<ruby>考<rt>かんが</rt></ruby>えることではなく、<ruby>自分<rt>じぶん</rt></ruby>から<ruby>目<rt>め</rt></ruby>を<ruby>離<rt>はな</rt></ruby>して<ruby>神<rt>かみ</rt></ruby>を<ruby>見上<rt>みあ</rt></ruby>げることである。",
       "romaji": "kennsonntoha,jibunnwohikukukanngaerukotodehanaku,jibunnkaramewohanashitekamiwomiagerukotodearu.",
       "kind": "提供リスト・出典未確認",
       "work": "いただいたリスト 111番",
@@ -4604,7 +4604,7 @@ window.QuestContent={
       "ref": "アーサー・ピンク",
       "jp": "神の主権を信じることは、困難な時の最良の慰めである。",
       "kana": "かみのしゅけんをしんじることは、こんなんなときのさいりょうのなぐさめである。",
-      "ruby": "<ruby>神<rt>かみ</rt></ruby>の<ruby>主権<rt>しゅけん</rt></ruby>を<ruby>信<rt>しん</rt></ruby>じることは、<ruby>困難<rt>こん</rt></ruby>な<ruby>時<rt>んなとき</rt></ruby>の<ruby>最良<rt>さいりょう</rt></ruby>の<ruby>慰<rt>なぐさ</rt></ruby>めである。",
+      "ruby": "<ruby>神<rt>かみ</rt></ruby>の<ruby>主権<rt>しゅけん</rt></ruby>を<ruby>信<rt>しん</rt></ruby>じることは、<ruby>困難<rt>こんなん</rt></ruby>な<ruby>時<rt>とき</rt></ruby>の<ruby>最良<rt>さいりょう</rt></ruby>の<ruby>慰<rt>なぐさ</rt></ruby>めである。",
       "romaji": "kaminoshukennwoshinnjirukotoha,konnnannnatokinosairyounonagusamedearu.",
       "kind": "提供リスト・出典未確認",
       "work": "いただいたリスト 180番",
@@ -4860,7 +4860,7 @@ window.QuestContent={
       "ref": "E.M.バウンズ",
       "jp": "神は祈りの人、祈りに生きる人を求めておられる。",
       "kana": "かみはいのりのひと、いのりにいきるひとをもとめておられる。",
-      "ruby": "<ruby>神<rt>かみ</rt></ruby>は<ruby>祈<rt>いの</rt></ruby>りの<ruby>人<rt>ひ</rt></ruby>、<ruby>祈<rt>といの</rt></ruby>りに<ruby>生<rt>い</rt></ruby>きる<ruby>人<rt>ひと</rt></ruby>を<ruby>求<rt>もと</rt></ruby>めておられる。",
+      "ruby": "<ruby>神<rt>かみ</rt></ruby>は<ruby>祈<rt>いの</rt></ruby>りの<ruby>人<rt>ひと</rt></ruby>、<ruby>祈<rt>いの</rt></ruby>りに<ruby>生<rt>い</rt></ruby>きる<ruby>人<rt>ひと</rt></ruby>を<ruby>求<rt>もと</rt></ruby>めておられる。",
       "romaji": "kamihainorinohito,inoriniikiruhitowomotometeorareru.",
       "kind": "提供リスト・出典未確認",
       "work": "いただいたリスト 196番",
