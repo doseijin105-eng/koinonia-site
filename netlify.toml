@@ -2,3 +2,5 @@
 [build]
   publish = "."
   functions = "netlify/functions"
+  # .md と docs/ だけの変更なら、ビルド・公開しない(本番公開1回=15クレジットの節約)
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)*.md' ':(exclude)docs/'"
