@@ -776,8 +776,11 @@ function showFail(why){
   on('bRetry',()=>startStage(false));on('bShop2',showShop);on('bTop',showTitle);
 }
 function taRank(t){return t<30?'S':t<45?'A':t<65?'B':'C';}
-function nameBox(){return `<input id="nm" maxlength="8" value="${esc(save.name)}" placeholder="なまえ" style="font:inherit;font-size:20px;padding:8px 12px;border-radius:12px;border:2px solid #d9b98a;width:70%;text-align:center"><br>`;}
+function nameBox(){return `<input id="nm" maxlength="8" value="${esc(save.name)}" placeholder="ニックネーム" style="font:inherit;font-size:20px;padding:8px 12px;border-radius:12px;border:2px solid #d9b98a;width:70%;text-align:center"><br><span style="font-size:11.5px;color:#7a6650">${ruby('みんなのランキングにも のります。ほんとうの{名前|なまえ}は いれないでね')}</span><br>`;}
 function readName(){const nm=(document.getElementById('nm').value||'').trim().slice(0,8)||'ゆうし';save.name=nm;return nm;}
+const NETAPI='/api/ikki-scores';
+async function netList(board){const r=await fetch(NETAPI+'?board='+board,{cache:'no-store'});if(!r.ok)throw new Error('load');return r.json();}
+function netPost(board,ent){try{return fetch(NETAPI,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({board,name:ent.name,score:ent.score,time:ent.time,sec:ent.sec,wave:ent.wave,char:CH()})}).then(r=>r.ok?r.json():null).catch(()=>null);}catch(e){return Promise.resolve(null);}}
 function pushRank(ent){ent.id=Date.now();ent.date=new Date().toLocaleDateString('ja-JP');save.rank.push(ent);save.rank=save.rank.slice(-90);persist();return ent.id;}
 function showTAResult(){
   const t=+finalT.toFixed(1),rk=taRank(t);unlock('ta');if(rk==='S')unlock('taS');addCoins(100);persist();
@@ -787,7 +790,7 @@ function showTAResult(){
   <p style="font-weight:bold">${ruby(better<10?'ランキング '+(better+1)+'{位|い}!{名前|なまえ}を{入|い}れよう':'{名前|なまえ}を{入|い}れて{記録|きろく}しよう')}</p>${nameBox()}
   <button id="bSave">${ruby('{記録|きろく}する')}</button><button id="bAgain" class="sub2">${ruby('もう{一度|いちど}')}</button><button id="bTop" class="sub2">${ruby('タイトルへ')}</button>
   <div class="verse">${ruby(V8)}</div>${COPY}</div>`);
-  on('bSave',()=>{const id=pushRank({m:'ta',name:readName(),time:t,score});showRank('ta',id);});
+  on('bSave',()=>{const ent={m:'ta',name:readName(),time:t,score};const id=pushRank(ent);const pr=netPost('ta',ent);showRank('ta',id,'all',pr);});
   on('bAgain',()=>startMode('ta',true));on('bTop',showTitle);
 }
 function showRunResult(why){
@@ -799,22 +802,39 @@ function showRunResult(why){
   <p>${m==='surv'?ruby('いきのこった{時間|じかん}'):ruby('のりこえた WAVE')}<br>SCORE ${score} / ${ruby('{倒|たお}した{数|かず}')} ${runKills}${ruby('{人|にん}')}<br>💰 +${runCoins}</p>${nameBox()}
   <button id="bSave">${ruby('{記録|きろく}する')}</button><button id="bAgain" class="sub2">${ruby('もう{一度|いちど}')}</button><button id="bShop2" class="sub2">${ruby('きょうか')}</button><button id="bTop" class="sub2">${ruby('タイトルへ')}</button>
   <div class="verse">${ruby(m==='field'?V12:V10)}</div>${COPY}</div>`);
-  on('bSave',()=>{const id=pushRank({m,name:readName(),score,sec,wave,time:sec});showRank(m,id);});
+  on('bSave',()=>{const ent={m,name:readName(),score,sec:Math.max(1,Math.round(sec)),wave,time:sec};const id=pushRank(ent);const pr=netPost(m,ent);showRank(m,id,'all',pr);});
   on('bAgain',()=>startMode(m,false));on('bShop2',showShop);on('bTop',showTitle);
 }
-function showRank(kind,hi){
-  const L=save.rank.filter(r=>(r.m||'ta')===kind);
-  const list=[...L].sort((a,b)=>kind==='ta'?a.time-b.time:kind==='surv'?b.score-a.score:(b.wave-a.wave)||(b.score-a.score)).slice(0,10);
-  const main=r=>kind==='ta'?r.time.toFixed(1)+'s':kind==='surv'?r.score:'WAVE '+r.wave;
+function showRank(kind,hi,scope,pending){
+  scope=scope||'all';const token=Symbol();showRank.tk=token;
+  const main=r=>kind==='ta'?Number(r.time).toFixed(1)+'s':kind==='surv'?r.score:'WAVE '+r.wave;
   const sub=r=>kind==='ta'?r.score+'('+taRank(r.time)+')':kind==='surv'?Math.floor(r.sec)+'s':r.score;
-  const row=(r,i)=>`<tr style="${r.id===hi?'background:#ffe9b0;font-weight:bold':''}"><td style="padding:4px 6px">${i+1}</td><td style="padding:4px 6px;text-align:left">${esc(r.name)}</td><td style="padding:4px 6px">${main(r)}</td><td style="padding:4px 6px;font-size:12px">${sub(r)}</td></tr>`;
+  const face=r=>scope==='all'?`<img src="${portrait(r.char||'yosh')}" alt="" style="height:22px;vertical-align:middle;margin-right:4px">`:'';
+  const isMe=r=>scope==='all'?r.name===save.name:r.id===hi;
+  const row=(r,i)=>`<tr style="${isMe(r)?'background:#ffe9b0;font-weight:bold':''}"><td style="padding:4px 6px">${i+1}</td><td style="padding:4px 6px;text-align:left">${face(r)}${esc(r.name)}</td><td style="padding:4px 6px">${main(r)}</td><td style="padding:4px 6px;font-size:12px">${sub(r)}</td></tr>`;
+  const table=list=>list.length?`<table style="width:100%;border-collapse:collapse;font-size:15px;margin:8px 0"><tr style="color:#7a6650;font-size:12px"><th>#</th><th>${ruby('{名前|なまえ}')}</th><th>${kind==='ta'?'タイム':kind==='surv'?'スコア':'WAVE'}</th><th>${kind==='ta'?'スコア':kind==='surv'?'じかん':'スコア'}</th></tr>${list.map(row).join('')}</table>`:`<p>${ruby('まだ{記録|きろく}がないよ。ちょうせんしよう!')}</p>`;
   const tab=(k,l)=>`<button class="${kind===k?'':'sub2'}" data-t="${k}" style="padding:7px 12px;font-size:14px">${ruby(l)}</button>`;
-  showOv(`<div class="card"><h2>${ruby('ランキング')}</h2><div>${tab('ta','タイム')}${tab('surv','サバイバル')}${tab('field','{畑|はたけ}')}</div>
-  ${list.length?`<table style="width:100%;border-collapse:collapse;font-size:15px;margin:8px 0"><tr style="color:#7a6650;font-size:12px"><th>#</th><th>${ruby('{名前|なまえ}')}</th><th>${kind==='ta'?'タイム':kind==='surv'?'スコア':'WAVE'}</th><th>${kind==='ta'?'スコア':kind==='surv'?'じかん':'スコア'}</th></tr>${list.map(row).join('')}</table>`:`<p>${ruby('まだ{記録|きろく}がないよ。ちょうせんしよう!')}</p>`}
-  <p style="font-size:11.5px;color:#7a6650">${ruby('{記録|きろく}は この{端末|たんまつ}の ブラウザに{保存|ほぞん}されます')}</p>
+  const sc=(k,l)=>`<button class="${scope===k?'':'sub2'}" data-s="${k}" style="padding:5px 12px;font-size:13px">${ruby(l)}</button>`;
+  const note=scope==='all'?'みんなの{記録|きろく}(ニックネームだけ{表示|ひょうじ}・1{人|にん}1つ)':'{記録|きろく}は この{端末|たんまつ}の ブラウザに{保存|ほぞん}されます';
+  const sorted=L=>[...L].sort((a,b)=>kind==='ta'?a.time-b.time:kind==='surv'?b.score-a.score:(b.wave-a.wave)||(b.score-a.score));
+  const body=scope==='all'?`<div id="netBox"><p>${ruby('よみこみ{中|ちゅう}…')}</p></div>`:table(sorted(save.rank.filter(r=>(r.m||'ta')===kind)).slice(0,10));
+  showOv(`<div class="card"><h2>${ruby('ランキング')}</h2><div>${sc('all','みんな')}${sc('me','この{端末|たんまつ}')}</div><div style="margin-top:6px">${tab('ta','タイム')}${tab('surv','サバイバル')}${tab('field','{畑|はたけ}')}</div>
+  ${body}<p id="netMsg" style="font-size:12.5px;font-weight:bold;margin:2px 0"></p>
+  <p style="font-size:11.5px;color:#7a6650">${ruby(note)}</p>
   <button id="bModes2" ${BTN_RED}>${ruby('モードをえらぶ')}</button><button id="bBack" class="sub2">${ruby('タイトルへ')}</button></div>`);
-  ov.querySelectorAll('button[data-t]').forEach(b=>b.onclick=()=>showRank(b.dataset.t,hi));
+  ov.querySelectorAll('button[data-t]').forEach(b=>b.onclick=()=>showRank(b.dataset.t,hi,scope));
+  ov.querySelectorAll('button[data-s]').forEach(b=>b.onclick=()=>showRank(kind,hi,b.dataset.s));
   on('bModes2',showModes);on('bBack',showTitle);
+  if(scope!=='all')return;
+  (async()=>{
+    let res=null;if(pending){res=await pending;}
+    let list;try{list=await netList(kind);}catch(e){list=null;}
+    if(showRank.tk!==token)return;
+    const box=document.getElementById('netBox'),msg=document.getElementById('netMsg');if(!box)return;
+    if(!list){box.innerHTML=`<p>${ruby('いまは みんなのランキングに つながりません。「この{端末|たんまつ}」で{見|み}られます')}</p>`;return;}
+    box.innerHTML=table(list.slice(0,20));
+    if(res&&res.rank>0&&msg)msg.innerHTML=ruby(res.improved?'みんなのランキング '+res.rank+'{位|い}!':'じこベストは そのまま('+res.rank+'{位|い})');
+  })();
 }
 function showEnd(){
   unlock('story');persist();
