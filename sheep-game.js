@@ -42,7 +42,7 @@
     }
     function offer(total){
       form.hidden=false;msg.textContent='';
-      form.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" maxlength="12" autocomplete="nickname" style="flex:1;min-width:10em;font:inherit;padding:8px 10px;border:1px solid #cdbf9e;border-radius:10px" placeholder="'+esc(R.ph)+'" value="'+esc(me)+'" aria-label="'+esc(R.ph)+'"><button type="button" class="btn sun">'+esc(R.send)+'</button></div><p style="margin:6px 0 0;font-size:.8rem;color:#5a6b80">'+esc(R.note)+'</p>';
+      form.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" maxlength="12" autocomplete="nickname" style="flex:1;min-width:10em;min-height:44px;box-sizing:border-box;font:inherit;padding:8px 10px;border:1px solid #cdbf9e;border-radius:10px" placeholder="'+esc(R.ph)+'" value="'+esc(me)+'" aria-label="'+esc(R.ph)+'"><button type="button" class="btn sun">'+esc(R.send)+'</button></div><p style="margin:6px 0 0;font-size:.8rem;color:#5a6b80">'+esc(R.note)+'</p>';
       var inp=form.querySelector('input'),go=form.querySelector('button');
       go.onclick=function(){
         var nk=(inp.value||'').replace(/[\u0000-\u001f<>]/g,'').trim().slice(0,12);

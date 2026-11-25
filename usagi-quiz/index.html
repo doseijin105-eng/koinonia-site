@@ -21,6 +21,11 @@
 body{margin:0;font-size:14px;font-family:system-ui,sans-serif}
 img{max-width:100%}
 [hidden]{display:none!important}
+/* ふりがな(furigana.js が自動で付ける) */
+ruby rt{font-size:.5em;font-weight:normal;letter-spacing:0}
+/* スマホで押しやすく(44px以上) */
+button,.btn,.iconbtn,.rtab,.topbar .brand{min-height:44px}
+.credit a{display:inline-block;padding:12px 2px;margin:-12px 0}
 </style>
 <title>モフ博士のうさぎクイズ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1410,5 +1415,6 @@ if("serviceWorker" in navigator && location.protocol.startsWith("http")){
   window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
 </script>
+<script src="furigana.js"></script>
 </body>
 </html>

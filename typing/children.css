@@ -49,3 +49,21 @@ body:has(#screen-game.active) .title-logo-container,body:has(#screen-result.acti
  .mascot-container {width:88px;right:9px;bottom:10px}.mascot-action {border-radius:17px}.mascot-bubble {font-size:16px;width:220px;max-width:220px;padding:11px 13px}.companion-label {display:none}.sound-controls {bottom:12px;left:12px}.quest-toast {font-size:17px;top:70px;padding:12px 17px}
 }
 @media(prefers-reduced-motion:reduce) {* {animation:none!important;transition:none!important}.stamp-slot:hover img {transform:none}}
+/* スマホ(幅760px以下):音量とクックを画面の上(見出しの右)に置き、入力欄やボタンに重ならないようにする。押す所は44px以上 */
+@media(max-width:760px) {
+ body {padding-bottom:24px}
+ .quest-header {position:relative;min-height:64px;padding-right:196px!important;align-items:center}
+ .edition {display:none}
+ .brand {min-height:44px;display:inline-flex;align-items:center}
+ .sound-controls {position:absolute;top:12px;right:68px;bottom:auto;left:auto;z-index:90;padding:2px 6px;gap:2px}
+ .sound-toggle-btn {min-width:44px;min-height:44px}
+ .sound-controls input,.volume-slider {width:64px;min-height:44px}
+ .mascot-container {position:absolute;top:6px;right:8px;bottom:auto;width:56px;z-index:91}
+ .mascot-action {border-radius:14px;min-width:56px;min-height:56px}
+ .mascot-bubble {position:absolute;top:calc(100% + 12px);right:0;bottom:auto;width:230px;max-width:min(230px,80vw);z-index:95}
+ .mascot-bubble::after {top:-15px;bottom:auto;right:18px;border-width:0 15px 15px;border-color:transparent transparent #d2b25f}
+ .mascot-bubble::before {top:-11px;bottom:auto;right:21px;border-width:0 12px 12px;border-color:transparent transparent #fff9dc}
+ .mascot-shadow {display:none}
+ .map-node {min-width:44px;width:44px;height:44px}.stage-stars {top:44px}
+}
+ruby rt{font-size:.5em;font-weight:normal;letter-spacing:0}

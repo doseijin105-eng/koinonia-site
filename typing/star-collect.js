@@ -116,7 +116,7 @@ window.endGame=function(isWinner=false){
  el('result-stars').innerHTML=`<p class="star-result-label">${starSources[source].name}で あつめた星</p><p class="star-result-score">✦ ${starRound.score.toLocaleString()}<span>こ</span></p><p>${newBest?'いちばんの きろくを こうしん！':'いちばんの きろく '+record.best.toLocaleString()+'こ'}</p><p class="star-result-detail">あつめる力 レベル${starRound.level} · いちばん つづいた数 ${questState.maxCombo}文字</p>`;
  el('result-stars').hidden=false;
  celebrateStarRound('finish');
- el('result-coach').textContent+=` 星とレベルは、まちがえても へらないよ。`;
+ el('result-coach').append(` 星とレベルは、まちがえても へらないよ。`);
 };
 const starOriginalRetry=window.retryQuest;
 window.retryQuest=function(){if(isStarChallenge())startStarCollect(questState.replay.source);else starOriginalRetry();};

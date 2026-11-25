@@ -182,6 +182,8 @@ body:not(.noruby) .lead, body:not(.noruby) #question, body:not(.noruby) #note, b
 body:not(.noruby) .readlist li, body:not(.noruby) .tlist li, body:not(.noruby) #resultSub, body:not(.noruby) .status{line-height:2.05}
 body.noruby rt{display:none}
 .choice .txt{padding-top:2px}
+/* スマホで押しやすく(44px以上) */
+button{min-height:44px;min-width:44px}
 </style>
 </head>
 <body>
@@ -222,7 +224,7 @@ body.noruby rt{display:none}
     <div class="field" id="bookField" hidden>
       <label class="flabel" for="bookSel" id="bookLabel" style="margin-top:0"><ruby>書<rt>しょ</rt></ruby>を<ruby>選<rt>えら</rt></ruby>ぶ</label>
       <select id="bookSel"></select>
-      <p class="hint">書を選ぶと、レベルやテーマに関係なく、その書の問題がすべて出題されます。</p>
+      <p class="hint"><ruby>書<rt>しょ</rt></ruby>を<ruby>選<rt>えら</rt></ruby>ぶと、レベルやテーマに<ruby>関係<rt>かんけい</rt></ruby>なく、その<ruby>書<rt>しょ</rt></ruby>の<ruby>問題<rt>もんだい</rt></ruby>がすべて<ruby>出題<rt>しゅつだい</rt></ruby>されます。</p>
     </div>
     <div class="field">
       <p class="flabel"><ruby>出題<rt>しゅつだい</rt></ruby><ruby>範囲<rt>はんい</rt></ruby></p>
@@ -368,6 +370,8 @@ const BOOKS = ["ローマ人への手紙", "コリント人への手紙第一", 
 const PAUL = BOOKS.slice(0,13), GENERAL = BOOKS.slice(13);
 const OT_BOOKS = ["創世記", "出エジプト記", "レビ記", "民数記", "申命記", "ヨシュア記", "士師記", "ルツ記", "サムエル記第一", "サムエル記第二", "列王記第一", "列王記第二", "歴代誌第一", "歴代誌第二", "エズラ記", "ネヘミヤ記", "エステル記", "ヨブ記", "詩篇", "箴言", "伝道者の書", "雅歌", "イザヤ書", "エレミヤ書", "哀歌", "エゼキエル書", "ダニエル書", "ホセア書", "ヨエル書", "アモス書", "オバデヤ書", "ヨナ書", "ミカ書", "ナホム書", "ハバクク書", "ゼパニヤ書", "ハガイ書", "ゼカリヤ書", "マラキ書"];
 const MINOR = OT_BOOKS.slice(27);
+// 書を選ぶ欄(<option> にはルビが付けられないので、かっこで読みを出す)
+const BOOK_YOMI = {"創世記": "そうせいき", "出エジプト記": "しゅつえじぷとき", "レビ記": "れびき", "民数記": "みんすうき", "申命記": "しんめいき", "ヨシュア記": "よしゅあき", "士師記": "ししき", "ルツ記": "るつき", "サムエル記第一": "さむえるきだいいち", "サムエル記第二": "さむえるきだいに", "列王記第一": "れつおうきだいいち", "列王記第二": "れつおうきだいに", "歴代誌第一": "れきだいしだいいち", "歴代誌第二": "れきだいしだいに", "エズラ記": "えずらき", "ネヘミヤ記": "ねへみやき", "エステル記": "えすてるき", "ヨブ記": "よぶき", "詩篇": "しへん", "箴言": "しんげん", "伝道者の書": "でんどうしゃのしょ", "雅歌": "がか", "イザヤ書": "いざやしょ", "エレミヤ書": "えれみやしょ", "哀歌": "あいか", "エゼキエル書": "えぜきえるしょ", "ダニエル書": "だにえるしょ", "ホセア書": "ほせあしょ", "ヨエル書": "よえるしょ", "アモス書": "あもすしょ", "オバデヤ書": "おばでやしょ", "ヨナ書": "よなしょ", "ミカ書": "みかしょ", "ナホム書": "なほむしょ", "ハバクク書": "はばくくしょ", "ゼパニヤ書": "ぜぱにやしょ", "ハガイ書": "はがいしょ", "ゼカリヤ書": "ぜかりやしょ", "マラキ書": "まらきしょ", "ローマ人への手紙": "ろーまじんへのてがみ", "コリント人への手紙第一": "こりんとじんへのてがみだいいち", "コリント人への手紙第二": "こりんとじんへのてがみだいに", "ガラテヤ人への手紙": "がらてやじんへのてがみ", "エペソ人への手紙": "えぺそじんへのてがみ", "ピリピ人への手紙": "ぴりぴじんへのてがみ", "コロサイ人への手紙": "ころさいじんへのてがみ", "テサロニケ人への手紙第一": "てさろにけじんへのてがみだいいち", "テサロニケ人への手紙第二": "てさろにけじんへのてがみだいに", "テモテへの手紙第一": "てもてへのてがみだいいち", "テモテへの手紙第二": "てもてへのてがみだいに", "テトスへの手紙": "てとすへのてがみ", "ピレモンへの手紙": "ぴれもんへのてがみ", "ヘブル人への手紙": "へぶるじんへのてがみ", "ヤコブの手紙": "やこぶのてがみ", "ペテロの手紙第一": "ぺてろのてがみだいいち", "ペテロの手紙第二": "ぺてろのてがみだいに", "ヨハネの手紙第一": "よはねのてがみだいいち", "ヨハネの手紙第二": "よはねのてがみだいに", "ヨハネの手紙第三": "よはねのてがみだいさん", "ユダの手紙": "ゆだのてがみ"};
 const $ = s => document.querySelector(s);
 const screens = { start:$("#start"), play:$("#play"), result:$("#result"), manage:$("#manage"), edit:$("#edit"), titles:$("#titles"), board:$("#board") };
 function show(name){ for (const k in screens) screens[k].hidden = (k !== name); window.scrollTo(0,0); }
@@ -498,8 +502,8 @@ function refreshBookField(){
   const sel = $("#bookSel"); sel.innerHTML = "";
   const list = bm === "nt" ? BOOKS : OT_BOOKS;
   const first = document.createElement("option"); first.value = "all";
-  first.textContent = plain(bm === "nt" ? "すべての{手紙|てがみ}" : "{旧約|きゅうやく}{聖書|せいしょ}のすべての{書|しょ}"); sel.appendChild(first);
-  list.forEach(b => { const o = document.createElement("option"); o.value = b; o.textContent = b; sel.appendChild(o); });
+  first.textContent = bm === "nt" ? "すべての手紙(てがみ)" : "旧約聖書(きゅうやくせいしょ)のすべての書(しょ)"; sel.appendChild(first);
+  list.forEach(b => { const o = document.createElement("option"); o.value = b; o.textContent = BOOK_YOMI[b] ? b + "(" + BOOK_YOMI[b] + ")" : b; sel.appendChild(o); });
   setR($("#bookLabel"), bm === "nt" ? "{手紙|てがみ}を{選|えら}ぶ" : "{旧約|きゅうやく}{聖書|せいしょ}の{書|しょ}を{選|えら}ぶ");
 }
 function pool(){
