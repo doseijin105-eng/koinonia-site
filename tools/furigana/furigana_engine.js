@@ -20,7 +20,10 @@
   ];
   function esc(s){ return s.replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
   function rb(t,r){ return "<ruby>"+esc(t)+"<rt>"+esc(r)+"</rt></ruby>"; }
+  // 漢字1字だけの選択肢は数えかたとして読む(クイズ「うさぎを数える助数詞は?」の 羽・頭・尾・枚 など)
+  var ALONE={"羽":"わ","頭":"とう","尾":"び","枚":"まい","匹":"ひき","本":"ほん","個":"こ","杯":"はい","台":"だい","冊":"さつ"};
   function annotate(text){
+    var tt=text.trim(); if(ALONE[tt]) return esc(text.slice(0,text.indexOf(tt)))+rb(tt,ALONE[tt])+esc(text.slice(text.indexOf(tt)+tt.length));
     var out="", i=0, changed=false;
     while(i<text.length){
       var ch=text[i];

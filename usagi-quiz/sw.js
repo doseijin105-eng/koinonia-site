@@ -1,5 +1,5 @@
 // モフ博士のうさぎクイズ: オフラインでも遊べるようにするためのキャッシュ
-const VERSION = "usagi-quiz-v12";
+const VERSION = "usagi-quiz-v13";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./furigana.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-32.png"];
 
