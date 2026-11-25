@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>聖書クイズ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+<style id="appStyle">
+:root{
+  --bg:#E9F1FF; --ink:#14215A; --muted:#4D5A8C; --panel:#FFFFFF; --line:#14215A; --shadow:#14215A;
+  --c1:#E8453C; --c2:#2F7DE1; --c3:#E0A400; --c4:#21A35B;
+  --ok-bg:#D7F5E3; --ng-bg:#FFE0DD; --field:#F6F9FF;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1638; --ink:#F2F5FF; --muted:#A9B1D6; --panel:#18224D; --line:#F2F5FF; --shadow:#050A22;
+    --ok-bg:#123D2A; --ng-bg:#4A1A1E; --field:#111A42;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1638; --ink:#F2F5FF; --muted:#A9B1D6; --panel:#18224D; --line:#F2F5FF; --shadow:#050A22;
+  --ok-bg:#123D2A; --ng-bg:#4A1A1E; --field:#111A42;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+  font-weight:500;line-height:1.6;-webkit-tap-highlight-color:transparent;
+}
+main{max-width:560px;margin:0 auto;padding:24px 16px 48px}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--c2);outline-offset:3px}
+
+.btn{
+  display:block;width:100%;padding:15px;border:3px solid var(--line);border-radius:16px;
+  background:var(--ink);color:var(--bg);font-weight:800;font-size:1.12rem;
+  box-shadow:0 5px 0 var(--shadow);cursor:pointer;transition:transform .08s,box-shadow .08s;
+}
+.btn:not(:disabled):active{transform:translateY(4px);box-shadow:0 1px 0 var(--shadow)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.sub{background:var(--panel);color:var(--ink)}
+.btn + .btn{margin-top:14px}
+.link{background:none;border:0;padding:8px 0;color:var(--c2);font-weight:800;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.danger{background:none;border:0;padding:10px 0;margin-top:18px;color:var(--c1);font-weight:800;cursor:pointer}
+
+/* Start */
+.shapes{display:flex;gap:10px;margin:8px 0 18px;font-size:1.6rem;line-height:1}
+.shapes span:nth-child(1){color:var(--c1)} .shapes span:nth-child(2){color:var(--c2)}
+.shapes span:nth-child(3){color:var(--c3)} .shapes span:nth-child(4){color:var(--c4)}
+h1{margin:0 0 12px;font-weight:800;font-size:clamp(3rem,15vw,4.4rem);line-height:1.05;letter-spacing:-.02em}
+h2{margin:0 0 8px;font-size:1.4rem;font-weight:800}
+.lead{margin:0 0 22px;color:var(--muted);font-size:1.05rem}
+.field{margin:0 0 16px}
+.flabel{margin:0 0 6px;font-weight:800;font-size:.95rem}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{
+  flex:1;min-width:6em;padding:10px 12px;border:3px solid var(--line);border-radius:12px;
+  background:var(--panel);font-weight:800;cursor:pointer;
+}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.status{margin:16px 0 0;text-align:center;color:var(--muted);font-size:.95rem}
+.center{text-align:center}
+
+/* Play */
+.hud{display:flex;justify-content:space-between;align-items:baseline;font-weight:800}
+.hud .count{font-size:1.1rem}
+.hud .score{color:var(--muted)}
+.timer{display:flex;align-items:center;gap:10px;margin:10px 0 0}
+.track{flex:1;height:12px;border:3px solid var(--line);border-radius:99px;overflow:hidden;background:var(--panel)}
+#bar{height:100%;background:var(--c2);transform-origin:left center}
+.timer.hurry #bar{background:var(--c1)}
+.timer.hurry #sec{color:var(--c1)}
+#sec{width:2ch;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.qcard{
+  margin-top:16px;border:3px solid var(--line);border-radius:18px;background:var(--panel);
+  padding:22px 18px;box-shadow:0 5px 0 var(--shadow);
+}
+#question{margin:0;font-size:clamp(1.2rem,5.2vw,1.45rem);font-weight:800;line-height:1.5}
+.choices{display:grid;gap:10px;margin-top:18px}
+@media (min-width:520px){.choices{grid-template-columns:1fr 1fr}}
+.choice{
+  display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px;min-height:62px;
+  border:3px solid var(--line);border-radius:14px;background:var(--panel);
+  box-shadow:0 4px 0 var(--shadow);font-size:1.02rem;font-weight:800;cursor:pointer;
+  transition:transform .08s,box-shadow .08s,opacity .2s;
+}
+.choice:not(:disabled):active{transform:translateY(3px);box-shadow:0 1px 0 var(--shadow)}
+.choice:disabled{cursor:default}
+.mark{flex:none;width:36px;height:36px;display:grid;place-items:center;border-radius:10px;background:var(--c);color:#fff;font-size:1rem}
+.choice.right{background:var(--ok-bg)}
+.choice.wrong{background:var(--ng-bg)}
+.choice.dim{opacity:.4}
+.feedback{
+  margin-top:18px;padding:16px 18px;border:3px solid var(--line);border-radius:16px;background:var(--panel);
+  border-left-width:12px;
+}
+.feedback.ok{border-left-color:var(--c4)}
+.feedback.ng{border-left-color:var(--c1)}
+#verdict{margin:0 0 4px;font-size:1.4rem;font-weight:800}
+.feedback.ok #verdict{color:var(--c4)}
+.feedback.ng #verdict{color:var(--c1)}
+#note{margin:0 0 8px}
+.ref{margin:0 0 16px;color:var(--muted);font-weight:800}
+
+/* Result */
+.big{font-size:clamp(4.5rem,24vw,7rem);font-weight:800;line-height:1;margin:10px 0 4px;font-variant-numeric:tabular-nums}
+.big small{font-size:.32em;color:var(--muted);margin-left:.2em}
+#resultMsg{font-size:1.3rem;font-weight:800;margin:6px 0 4px}
+#resultSub{color:var(--muted);margin:0 0 22px}
+.readlist{margin:0 0 24px;padding:16px 18px;border:3px solid var(--line);border-radius:16px;background:var(--panel)}
+.readlist ul{margin:0;padding:0;list-style:none}
+.readlist li{padding:10px 0;border-top:2px dashed color-mix(in srgb,var(--line) 25%,transparent)}
+.readlist li:first-child{border-top:0}
+.readlist .rq{display:block;font-weight:800}
+.readlist .ra{display:block;color:var(--muted);font-size:.95rem}
+
+/* Manage */
+.qlist{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:8px}
+.qitem{
+  width:100%;display:flex;gap:10px;align-items:flex-start;text-align:left;padding:12px;
+  border:3px solid var(--line);border-radius:12px;background:var(--panel);cursor:pointer;font-weight:800;
+}
+.tag{flex:none;padding:1px 8px;border-radius:8px;font-size:.8rem;color:#fff;background:var(--c2)}
+.tag.ot{background:var(--c3)}
+.muted{color:var(--muted)}
+label{display:block;font-weight:800;font-size:.95rem;margin:14px 0 6px}
+input[type=text],textarea,select{
+  width:100%;padding:12px;border:3px solid var(--line);border-radius:12px;background:var(--field);font-size:1rem;
+}
+textarea{min-height:5.5em;resize:vertical}
+.hint{font-size:.85rem;color:var(--muted);margin:4px 0 0}
+#editMsg{min-height:1.6em;margin:14px 0 10px;color:var(--c1);font-weight:800}
+
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;scroll-behavior:auto!important} }
+
+.seg.wrap button{flex:1 1 30%}
+.tag.cm{background:var(--c4)}
+.lv{flex:none;padding:1px 8px;border-radius:8px;font-size:.8rem;border:2px solid var(--line)}
+.qitem .qt{flex:1}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.titlecard{margin:0 0 20px;padding:14px 16px;border:3px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:0 4px 0 var(--shadow)}
+.boardmsg{font-weight:800;color:var(--c2);margin:6px 0 12px}
+.bjoin{margin:14px 0;padding:12px 14px;border:3px solid var(--line);border-radius:14px;background:var(--panel)}
+.bjoin label{margin-top:0}
+.brow{display:flex;gap:8px}.brow input{flex:1}
+.btn.bsave{width:auto;margin:0;padding:10px 16px;white-space:nowrap}
+.blist{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.blist li{display:flex;align-items:center;gap:10px;padding:10px 12px;border:3px solid var(--line);border-radius:12px;background:var(--panel);font-weight:800}
+.blist li.me{background:var(--ok-bg)}
+.blist .bn{flex:none;width:2.2em;text-align:center;color:var(--muted)}
+.blist .bt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blist .bt small{display:block;color:var(--muted);font-size:.8rem;font-weight:500}
+.blist .bs{flex:none}
+.titlecard .tl{margin:0;color:var(--muted);font-size:.9rem;font-weight:800}
+.titlecard .tn{margin:0;font-size:1.45rem;font-weight:800;line-height:1.3}
+.titlecard .tx{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+.meter{height:10px;margin-top:8px;border:2px solid var(--line);border-radius:99px;overflow:hidden;background:var(--field)}
+.meter span{display:block;height:100%;background:var(--c3)}
+.newtitles{margin:0 0 22px;padding:16px 18px;border:3px solid var(--line);border-radius:16px;background:var(--panel);border-left:12px solid var(--c3)}
+.newtitles ul,.tlist{list-style:none;margin:0;padding:0}
+.newtitles li{padding:6px 0;font-weight:800}
+.newtitles li small{display:block;font-weight:500;color:var(--muted)}
+.tlist{display:grid;gap:8px;margin-top:16px}
+.tlist li{display:flex;gap:12px;align-items:center;padding:12px;border:3px solid var(--line);border-radius:12px;background:var(--panel)}
+.tlist .ico{flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:10px;background:var(--c3);font-size:1.3rem}
+.tlist .tt{display:block;font-weight:800}
+.tlist .td{display:block;color:var(--muted);font-size:.9rem}
+.tlist li.locked{opacity:.55}
+.tlist li.locked .ico{background:var(--field);border:2px dashed var(--line)}
+.kids #question{font-size:clamp(1.3rem,5.8vw,1.6rem)}
+
+ruby{ruby-position:over}
+rt{font-size:.5em;font-weight:500;letter-spacing:0;line-height:1}
+body:not(.noruby) .lead, body:not(.noruby) #question, body:not(.noruby) #note, body:not(.noruby) .choice .txt,
+body:not(.noruby) .readlist li, body:not(.noruby) .tlist li, body:not(.noruby) #resultSub, body:not(.noruby) .status{line-height:2.05}
+body.noruby rt{display:none}
+.choice .txt{padding-top:2px}
+</style>
+</head>
+<body>
+<main>
+
+  <section id="start">
+    <div class="shapes" aria-hidden="true"><span>●</span><span>▲</span><span>■</span><span>◆</span></div>
+    <h1><ruby>聖書<rt>せいしょ</rt></ruby><br>クイズ</h1>
+    <p class="lead">クイズに<ruby>答<rt>こた</rt></ruby>えながら、<ruby>聖書<rt>せいしょ</rt></ruby>の<ruby>物語<rt>ものがたり</rt></ruby>や<ruby>人物<rt>じんぶつ</rt></ruby>を<ruby>楽<rt>たの</rt></ruby>しく<ruby>学<rt>まな</rt></ruby>びましょう。<ruby>答<rt>こた</rt></ruby>えのあとに、<ruby>読<rt>よ</rt></ruby>んでほしい<ruby>聖書<rt>せいしょ</rt></ruby>の<ruby>箇所<rt>かしょ</rt></ruby>も<ruby>出<rt>で</rt></ruby>てきます。<ruby>聖書<rt>せいしょ</rt></ruby>の<ruby>書名<rt>しょめい</rt></ruby>や<ruby>人名<rt>じんめい</rt></ruby>は「<ruby>新改訳<rt>しんかいやく</rt></ruby>2017」に<ruby>合<rt>あ</rt></ruby>わせています。</p>
+    <div class="titlecard">
+      <p class="tl">あなたの<ruby>称号<rt>しょうごう</rt></ruby></p>
+      <p class="tn" id="tName">まだありません</p>
+      <p class="tx" id="tNext"></p>
+      <div class="meter" aria-hidden="true"><span id="tMeter" style="width:0%"></span></div>
+      <button class="link" id="titlesBtn"><ruby>称号<rt>しょうごう</rt></ruby>の<ruby>一覧<rt>いちらん</rt></ruby>を<ruby>見<rt>み</rt></ruby>る</button>
+      <button class="link" id="boardBtn" hidden>🏆 みんなのランキング</button>
+    </div>
+    <div class="field">
+      <p class="flabel">レベル</p>
+      <div class="seg" id="levelSeg">
+        <button data-level="1" aria-pressed="false">かんたん(こども)</button>
+        <button data-level="2" aria-pressed="true">ふつう</button>
+        <button data-level="3" aria-pressed="false">むずかしい</button>
+        <button data-level="mix" aria-pressed="false">ミックス</button>
+      </div>
+    </div>
+    <div class="field">
+      <p class="flabel">テーマ</p>
+      <div class="seg wrap" id="themeSeg">
+        <button data-theme="all" aria-pressed="true">すべて</button>
+        <button data-theme="人物" aria-pressed="false"><ruby>人物<rt>じんぶつ</rt></ruby></button>
+        <button data-theme="たとえ話" aria-pressed="false">たとえ<ruby>話<rt>ばなし</rt></ruby></button>
+        <button data-theme="できごと" aria-pressed="false">できごと</button>
+        <button data-theme="基本" aria-pressed="false"><ruby>聖書<rt>せいしょ</rt></ruby>の<ruby>基本<rt>きほん</rt></ruby></button>
+        <button data-theme="書簡" aria-pressed="false"><ruby>手紙<rt>てがみ</rt></ruby>(<ruby>書簡<rt>しょかん</rt></ruby>)</button>
+      </div>
+    </div>
+    <div class="field" id="bookField" hidden>
+      <label class="flabel" for="bookSel" id="bookLabel" style="margin-top:0"><ruby>書<rt>しょ</rt></ruby>を<ruby>選<rt>えら</rt></ruby>ぶ</label>
+      <select id="bookSel"></select>
+      <p class="hint">書を選ぶと、レベルやテーマに関係なく、その書の問題がすべて出題されます。</p>
+    </div>
+    <div class="field">
+      <p class="flabel"><ruby>出題<rt>しゅつだい</rt></ruby><ruby>範囲<rt>はんい</rt></ruby></p>
+      <div class="seg" id="catSeg">
+        <button data-cat="all" aria-pressed="true">すべて</button>
+        <button data-cat="旧約" aria-pressed="false"><ruby>旧約<rt>きゅうやく</rt></ruby><ruby>聖書<rt>せいしょ</rt></ruby></button>
+        <button data-cat="新約" aria-pressed="false"><ruby>新約<rt>しんやく</rt></ruby><ruby>聖書<rt>せいしょ</rt></ruby></button>
+      </div>
+    </div>
+    <div class="field">
+      <p class="flabel">あそびかた</p>
+      <div class="seg" id="modeSeg">
+        <button data-mode="timed" aria-pressed="true">1<ruby>問<rt>もん</rt></ruby>20<ruby>秒<rt>びょう</rt></ruby></button>
+        <button data-mode="calm" aria-pressed="false"><ruby>時間<rt>じかん</rt></ruby><ruby>制限<rt>せいげん</rt></ruby>なし</button>
+      </div>
+    </div>
+    <div class="field">
+      <p class="flabel">ふりがな</p>
+      <div class="seg" id="rubySeg">
+        <button data-ruby="on" aria-pressed="true">あり</button>
+        <button data-ruby="off" aria-pressed="false">なし</button>
+      </div>
+    </div>
+    <button class="btn" id="startBtn">スタート</button>
+    <button class="btn sub" id="reviewBtn" hidden></button>
+    <p class="status" id="statusLine"></p>
+    <p class="center"><button class="link" id="manageBtn" hidden><ruby>問題<rt>もんだい</rt></ruby>を<ruby>追加<rt>ついか</rt></ruby>・<ruby>編集<rt>へんしゅう</rt></ruby>する</button></p>
+  </section>
+
+  <section id="play" hidden>
+    <div class="hud">
+      <span class="count" id="count">1 / 10</span>
+      <span class="score" id="score">0<ruby>問<rt>もん</rt></ruby><ruby>正解<rt>せいかい</rt></ruby></span>
+    </div>
+    <div class="timer" id="timer">
+      <div class="track" aria-hidden="true"><div id="bar"></div></div>
+      <span id="sec" aria-label="残り秒数">20</span>
+    </div>
+    <div class="qcard"><p id="question"></p></div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback" hidden aria-live="polite">
+      <p id="verdict"></p>
+      <p id="note"></p>
+      <p class="ref" id="ref"></p>
+      <button class="btn" id="next"><ruby>次<rt>つぎ</rt></ruby>の<ruby>問題<rt>もんだい</rt></ruby>へ</button>
+    </div>
+  </section>
+
+  <section id="result" hidden>
+    <div class="shapes" aria-hidden="true"><span>●</span><span>▲</span><span>■</span><span>◆</span></div>
+    <p class="big"><span id="finalScore">0</span><small id="finalTotal">/ 10</small></p>
+    <p id="resultMsg"></p>
+    <p id="resultSub"></p>
+    <div class="newtitles" id="newTitles" hidden>
+      <h2><ruby>新<rt>あたら</rt></ruby>しい<ruby>称号<rt>しょうごう</rt></ruby>を<ruby>手<rt>て</rt></ruby>に<ruby>入<rt>い</rt></ruby>れました</h2>
+      <ul id="newTitleItems"></ul>
+    </div>
+    <div class="readlist" id="readlist" hidden>
+      <h2><ruby>読<rt>よ</rt></ruby>んでみよう</h2>
+      <ul id="readItems"></ul>
+    </div>
+    <p id="boardMsg" class="boardmsg" hidden></p>
+    <button class="btn" id="againBtn">もう<ruby>一<rt>いち</rt></ruby><ruby>度<rt>ど</rt></ruby><ruby>遊<rt>あそ</rt></ruby>ぶ</button>
+    <button class="btn sub" id="homeBtn">はじめの<ruby>画面<rt>がめん</rt></ruby>へ</button>
+  </section>
+
+  <section id="titles" hidden>
+    <button class="link" id="titlesBack">はじめの<ruby>画面<rt>がめん</rt></ruby>へもどる</button>
+    <h2 style="margin-top:8px"><ruby>称号<rt>しょうごう</rt></ruby>の<ruby>一覧<rt>いちらん</rt></ruby></h2>
+    <p class="muted" id="tCount"></p>
+    <ul class="tlist" id="tList"></ul>
+  </section>
+
+  <section id="board" hidden>
+    <button class="link" id="boardBack">はじめの<ruby>画面<rt>がめん</rt></ruby>へもどる</button>
+    <h2 style="margin-top:8px">🏆 みんなのランキング</h2>
+    <p class="muted" id="boardLead"></p>
+    <div class="bjoin">
+      <label for="bNick">ニックネーム(12<ruby>文字<rt>もじ</rt></ruby>まで)</label>
+      <div class="brow"><input type="text" id="bNick" maxlength="12" autocomplete="nickname"><button class="btn bsave" id="bSave"></button></div>
+      <p class="hint" id="bHint"></p>
+    </div>
+    <ol class="blist" id="bList"></ol>
+  </section>
+
+  <section id="manage" hidden>
+    <button class="link" id="backBtn">はじめの<ruby>画面<rt>がめん</rt></ruby>へもどる</button>
+    <h2 style="margin-top:8px"><ruby>問題<rt>もんだい</rt></ruby>の<ruby>管理<rt>かんり</rt></ruby></h2>
+    <p class="muted" id="mcount"></p>
+    <button class="btn" id="newBtn"><ruby>新<rt>あたら</rt></ruby>しい<ruby>問題<rt>もんだい</rt></ruby>を<ruby>追加<rt>ついか</rt></ruby></button>
+    <ul class="qlist" id="qlist"></ul>
+  </section>
+
+  <section id="edit" hidden>
+    <h2 id="editTitle"><ruby>問題<rt>もんだい</rt></ruby>を<ruby>編集<rt>へんしゅう</rt></ruby></h2>
+    <label for="fQ"><ruby>問題<rt>もんだい</rt></ruby><ruby>文<rt>ぶん</rt></ruby></label>
+    <textarea id="fQ"></textarea>
+    <label for="fA"><ruby>正解<rt>せいかい</rt></ruby></label>
+    <input type="text" id="fA">
+    <label for="fW1">まちがいの<ruby>選択<rt>せんたく</rt></ruby><ruby>肢<rt>し</rt></ruby></label>
+    <input type="text" id="fW1" aria-label="まちがいの選択肢1">
+    <input type="text" id="fW2" aria-label="まちがいの選択肢2" style="margin-top:8px">
+    <input type="text" id="fW3" aria-label="まちがいの選択肢3" style="margin-top:8px">
+    <div class="row2">
+      <div>
+        <label for="fLevel">レベル</label>
+        <select id="fLevel"><option value="1">かんたん</option><option value="2">ふつう</option><option value="3">むずかしい</option></select>
+      </div>
+      <div>
+        <label for="fTheme">テーマ</label>
+        <select id="fTheme"><option value="人物">人物</option><option value="たとえ話">たとえ話</option><option value="できごと">できごと</option><option value="基本">聖書の基本</option><option value="書簡">手紙(書簡)</option></select>
+      </div>
+    </div>
+    <label for="fBook"><ruby>聖書<rt>せいしょ</rt></ruby>の<ruby>書<rt>しょ</rt></ruby>(<ruby>書<rt>しょ</rt></ruby>ごとの<ruby>出題<rt>しゅつだい</rt></ruby>に<ruby>使<rt>つか</rt></ruby>います)</label>
+    <select id="fBook"></select>
+    <label for="fCat"><ruby>出題<rt>しゅつだい</rt></ruby><ruby>範囲<rt>はんい</rt></ruby></label>
+    <select id="fCat"><option value="旧約">旧約聖書</option><option value="新約">新約聖書</option><option value="共通">共通</option></select>
+    <label for="fRef"><ruby>聖書<rt>せいしょ</rt></ruby>の<ruby>箇所<rt>かしょ</rt></ruby></label>
+    <input type="text" id="fRef" placeholder="例:創世記 1章">
+    <label for="fNote"><ruby>解説<rt>かいせつ</rt></ruby></label>
+    <textarea id="fNote"></textarea>
+    <p class="hint">ふりがなは {<ruby>漢字<rt>かんじ</rt></ruby>|かんじ} の<ruby>形<rt>かたち</rt></ruby>で<ruby>書<rt>か</rt></ruby>くと<ruby>表示<rt>ひょうじ</rt></ruby>されます(<ruby>例<rt>れい</rt></ruby>:{<ruby>聖書<rt>せいしょ</rt></ruby>|せいしょ})。<ruby>選択<rt>せんたく</rt></ruby><ruby>肢<rt>し</rt></ruby>の<ruby>並<rt>なら</rt></ruby>びは<ruby>出題<rt>しゅつだい</rt></ruby>のたびにシャッフルされます。<ruby>保存<rt>ほぞん</rt></ruby>すると、<ruby>公開<rt>こうかい</rt></ruby><ruby>中<rt>ちゅう</rt></ruby>のゲームにすぐ<ruby>反映<rt>はんえい</rt></ruby>されます。</p>
+    <p id="editMsg" role="status"></p>
+    <button class="btn" id="saveBtn"><ruby>保存<rt>ほぞん</rt></ruby>して<ruby>公開<rt>こうかい</rt></ruby>する</button>
+    <button class="btn sub" id="cancelBtn">やめる</button>
+    <p class="center"><button class="danger" id="delBtn" hidden>この<ruby>問題<rt>もんだい</rt></ruby>を<ruby>削除<rt>さくじょ</rt></ruby></button></p>
+  </section>
+
+</main>
+<script type="application/json" id="qdata">[{"id": "q001", "q": "{神|かみ}が{天|てん}と{地|ち}を{創造|そうぞう}した{話|はなし}から{始|はじ}まる、{聖書|せいしょ}の{最初|さいしょ}の{書|しょ}は?", "answer": "{創世記|そうせいき}", "wrong": ["{出|しゅつ}エジプト{記|き}", "{詩篇|しへん}", "ヨブ{記|き}"], "cat": "旧約", "theme": "基本", "level": 1, "ref": "{創世記|そうせいき} 1{章|しょう}", "note": "{6日|むいか}{間|かん}で{世界|せかい}が{造|つく}られ、{7日|なのか}{目|め}に{神|かみ}が{休|やす}まれたと{記|しる}されています。", "order": 1, "book": "創世記"}, {"id": "k01", "q": "かみさまが さいしょに つくった {人|ひと}は だれ?", "answer": "アダム", "wrong": ["ノア", "モーセ", "アブラハム"], "cat": "旧約", "theme": "人物", "level": 1, "ref": "{創世記|そうせいき} 2{章|しょう}", "note": "さいしょの{人|ひと}アダムのあと、エバがつくられました。", "order": 2, "book": "創世記"}, {"id": "k02", "q": "おおきな はこぶねを つくった {人|ひと}は だれ?", "answer": "ノア", "wrong": ["モーセ", "ダビデ", "ヨナ"], "cat": "旧約", "theme": "人物", "level": 1, "ref": "{創世記|そうせいき} 6{章|しょう}", "note": "{家族|かぞく}と{動物|どうぶつ}たちを{箱舟|はこぶね}にのせて、{大洪水|だいこうずい}から{守|まも}られました。", "order": 3, "book": "創世記"}, {"id": "k03", "q": "{大|おお}こうずいの あと、かみさまの やくそくの しるしとして そらに でたものは?", "answer": "にじ", "wrong": ["ほし", "つき", "いなずま"], "cat": "旧約", "theme": "できごと", "level": 1, "ref": "{創世記|そうせいき} 9{章|しょう}", "note": "もう{洪水|こうずい}で{地|ち}をほろぼさない、という{神|かみ}さまの{約束|やくそく}のしるしです。", "order": 4, "book": "創世記"}, {"id": "k04", "q": "{海|うみ}が ふたつに わかれて、イスラエルの{人|ひと}びとが わたったのは だれが みちびいた とき?", "answer": "モーセ", "wrong": ["ノア", "ダビデ", "ヨシュア"], "cat": "旧約", "theme": "できごと", "level": 1, "ref": "{出|しゅつ}エジプト{記|き} 14{章|しょう}", "note": "エジプトから{逃|に}げる{人々|ひとびと}の{前|まえ}で{海|うみ}が{分|わ}かれ、{乾|かわ}いた{地|ち}を{渡|わた}りました。", "order": 5, "book": "出エジプト記"}, {"id": "k05", "q": "{少年|しょうねん}ダビデが そだてていた {動物|どうぶつ}は?", "answer": "ひつじ", "wrong": ["うし", "らくだ", "うま"], "cat": "旧約", "theme": "人物", "level": 1, "ref": "サムエル{記|き}{第|だい}{一|いち} 16〜17{章|しょう}", "note": "ダビデは{羊飼|ひつじか}いで、{羊|ひつじ}を{守|まも}るために{獅子|しし}や{熊|くま}とも{戦|たたか}いました。", "order": 6, "book": "サムエル記第一"}, {"id": "q007", "q": "{石|いし}なげで {大男|おおおとこ}ゴリヤテを たおした {少年|しょうねん}は?", "answer": "ダビデ", "wrong": ["サウル", "ソロモン", "ヨナタン"], "cat": "旧約", "theme": "人物", "level": 1, "ref": "サムエル{記|き}{第|だい}{一|いち} 17{章|しょう}", "note": "{羊飼|ひつじか}いの{少年|しょうねん}ダビデは、のちにイスラエルの{王|おう}になりました。", "order": 7, "book": "サムエル記第一"}, {"id": "q009", "q": "しし(ライオン)の あなに なげこまれても、かみさまに まもられた {人|ひと}は?", "answer": "ダニエル", "wrong": ["エレミヤ", "ヨセフ", "サムソン"], "cat": "旧約", "theme": "人物", "level": 1, "ref": "ダニエル{書|しょ} 6{章|しょう}", "note": "{王|おう}の{命令|めいれい}に{背|そむ}いてまで{祈|いの}り{続|つづ}けたため{穴|あな}に{入|い}れられましたが、{無事|ぶじ}でした。", "order": 8, "book": "ダニエル書"}, {"id": "q010", "q": "{大|おお}きな さかなに のみこまれ、{3日|みっか}3ばん おなかの{中|なか}に いた {人|ひと}は?", "answer": "ヨナ", "wrong": ["エリヤ", "イザヤ", "ダニエル"], "cat": "旧約", "theme": "人物", "level": 1, "ref": "ヨナ{書|しょ} 2{章|しょう}", "note": "ニネベへ{行|い}けという{神|かみ}さまの{命令|めいれい}から{逃|に}げようとしたのが{始|はじ}まりでした。", "order": 9, "book": "ヨナ書"}, {"id": "k06", "q": "イエスさまの おかあさんの なまえは?", "answer": "マリア", "wrong": ["エリサベツ", "マルタ", "サラ"], "cat": "新約", "theme": "人物", "level": 1, "ref": "ルカの{福音書|ふくいんしょ} 1{章|しょう}", "note": "{御使|みつか}いガブリエルが、イエスさまが{生|う}まれることをマリアに{知|し}らせました。", "order": 10}, {"id": "q011", "q": "イエスさまが うまれた {町|まち}は?", "answer": "ベツレヘム", "wrong": ["ナザレ", "エルサレム", "カペナウム"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "ルカの{福音書|ふくいんしょ} 2{章|しょう}", "note": "{生|う}まれたのはベツレヘム、{育|そだ}ったのはガリラヤのナザレです。", "order": 11}, {"id": "k07", "q": "うまれた イエスさまが ねかされた ところは?", "answer": "かいばおけ", "wrong": ["ゆりかご", "ベッド", "たる"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "ルカの{福音書|ふくいんしょ} 2{章|しょう}", "note": "{宿屋|やどや}に{場所|ばしょ}がなく、{飼葉桶|かいばおけ}に{寝|ね}かされました。", "order": 12}, {"id": "k08", "q": "ほしに みちびかれて、イエスさまを おがみに きたのは?", "answer": "{東方|とうほう}の{博士|はかせ}たち", "wrong": ["{漁師|りょうし}たち", "{兵士|へいし}たち", "{羊飼|ひつじか}いの{王|おう}さま"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "マタイの{福音書|ふくいんしょ} 2{章|しょう}", "note": "{博士|はかせ}たちは{黄金|おうごん}・{乳香|にゅうこう}・{没薬|もつやく}をささげました。", "order": 13}, {"id": "k09", "q": "イエスさまが えらんだ {弟子|でし}は なんにん?", "answer": "12{人|にん}", "wrong": ["7{人|にん}", "10{人|にん}", "40{人|にん}"], "cat": "新約", "theme": "基本", "level": 1, "ref": "マルコの{福音書|ふくいんしょ} 3{章|しょう}", "note": "この12{人|にん}は「{十二使徒|じゅうにしと}」とも{呼|よ}ばれます。", "order": 14}, {"id": "q013", "q": "{五千人|ごせんにん}に たべものを くばったとき、もとに なった パンと さかなの かずは?", "answer": "パン5つと{魚|さかな}2ひき", "wrong": ["パン2つと{魚|さかな}5ひき", "パン7つと{魚|さかな}3びき", "パン12こと{魚|さかな}1ぴき"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "マルコの{福音書|ふくいんしょ} 6{章|しょう}", "note": "みんながおなかいっぱいになり、{残|のこ}りは12のかごにいっぱいになりました。", "order": 15}, {"id": "k10", "q": "「いなくなった ひつじ」の たとえで、ひつじかいが さがしに いったのは なんびき?", "answer": "1ぴき", "wrong": ["2ひき", "10ぴき", "99ひき"], "cat": "新約", "theme": "たとえ話", "level": 1, "ref": "ルカの{福音書|ふくいんしょ} 15{章|しょう}", "note": "99{匹|ひき}を{残|のこ}して、いなくなった1{匹|ひき}を{見|み}つかるまで{探|さが}しに{行|い}きました。", "order": 16}, {"id": "q014", "q": "「{良|よ}いサマリア{人|じん}」の たとえで、たおれていた {人|ひと}を たすけたのは?", "answer": "サマリア{人|じん}", "wrong": ["{祭司|さいし}", "レビ{人|じん}", "{宿屋|やどや}の{主人|しゅじん}"], "cat": "新約", "theme": "たとえ話", "level": 1, "ref": "ルカの{福音書|ふくいんしょ} 10{章|しょう}", "note": "「となりびととはだれか」という{問|と}いに、イエスさまがこのたとえで{答|こた}えました。", "order": 17}, {"id": "k11", "q": "「たねまき」の たとえで、たくさん みを むすんだのは どこに おちた たね?", "answer": "よい{地|ち}", "wrong": ["{道|みち}ばた", "{石|いし}だらけの{所|ところ}", "いばらの{中|なか}"], "cat": "新約", "theme": "たとえ話", "level": 1, "ref": "マルコの{福音書|ふくいんしょ} 4{章|しょう}", "note": "よい{地|ち}は、みことばを{聞|き}いて{受|う}け{入|い}れる{人|ひと}のことだとイエスさまは{説明|せつめい}しました。", "order": 18}, {"id": "k12", "q": "ザアカイが イエスさまを {見|み}るために のぼった {木|き}は?", "answer": "いちじく{桑|くわ}の{木|き}", "wrong": ["やしの{木|き}", "オリーブの{木|き}", "ぶどうの{木|き}"], "cat": "新約", "theme": "人物", "level": 1, "ref": "ルカの{福音書|ふくいんしょ} 19{章|しょう}", "note": "{背|せ}が{低|ひく}かったザアカイを{見|み}つけて、イエスさまは「{今日|きょう}あなたの{家|いえ}に{泊|と}まりたい」と{言|い}いました。", "order": 19}, {"id": "k13", "q": "{十字|じゅうじ}{架|か}の あと、イエスさまが よみがえったのは なん{日|にち}{目|め}?", "answer": "{3日|みっか}{目|め}", "wrong": ["{1日|いちにち}{目|め}", "{7日|なのか}{目|め}", "{40日|よんじゅうにち}{目|め}"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "ルカの{福音書|ふくいんしょ} 24{章|しょう}", "note": "{週|しゅう}の{初|はじ}めの{日|ひ}の{朝|あさ}、{墓|はか}は{空|そら}になっていました。", "order": 20}, {"id": "k14", "q": "{聖書|せいしょ}は {大|おお}きく 2つに わかれています。「{旧約|きゅうやく}{聖書|せいしょ}」と もう1つは?", "answer": "{新約|しんやく}{聖書|せいしょ}", "wrong": ["{中約|ちゅうやく}{聖書|せいしょ}", "{古約|こやく}{聖書|せいしょ}", "{後約|こうやく}{聖書|せいしょ}"], "cat": "共通", "theme": "基本", "level": 1, "ref": "{聖書|せいしょ} {目|め}{次|つぎ}", "note": "{旧約|きゅうやく}は39{巻|かん}、{新約|しんやく}は27{巻|かん}です。", "order": 21}, {"id": "q002", "q": "ノアが{箱舟|はこぶね}から{最初|さいしょ}に{放|はな}った{鳥|とり}は?", "answer": "カラス", "wrong": ["ハト", "ワシ", "スズメ"], "cat": "旧約", "theme": "できごと", "level": 2, "ref": "{創世記|そうせいき} 8{章|しょう}", "note": "{最初|さいしょ}はカラス、{次|つぎ}にハトを{放|はな}ちました。ハトがオリーブの{葉|は}をくわえて{戻|もど}り、{水|みず}が{引|ひ}いたことがわかりました。", "order": 22, "book": "創世記"}, {"id": "q004", "q": "アブラハムの{妻|つま}で、{高齢|こうれい}になってイサクを{産|う}んだのは?", "answer": "サラ", "wrong": ["リベカ", "ラケル", "レア"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{創世記|そうせいき} 21{章|しょう}", "note": "{神|かみ}の{約束|やくそく}どおり、{年老|としお}いてから{息子|むすこ}イサクが{生|う}まれました。", "order": 23, "book": "創世記"}, {"id": "h01", "q": "イスラエル{十二部族|じゅうにぶぞく}の{父|ちち}ヤコブが、{神|かみ}から{与|あた}えられた{別|べつ}の{名前|なまえ}は?", "answer": "イスラエル", "wrong": ["エドム", "ユダ", "アブラム"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{創世記|そうせいき} 32{章|しょう}", "note": "エドムは{兄|あに}エサウの{別名|べつめい}、アブラムはアブラハムの{元|もと}の{名前|なまえ}です。", "order": 24, "book": "創世記"}, {"id": "q003", "q": "{兄|あに}たちに{売|う}られたものの、のちにエジプトで{王|おう}に{次|つ}ぐ{地位|ちい}についたのは?", "answer": "ヨセフ", "wrong": ["ベニヤミン", "ユダ", "モーセ"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{創世記|そうせいき} 37{章|しょう}、41{章|しょう}", "note": "ファラオの{夢|ゆめ}を{解|と}き{明|あ}かし、{飢饉|ききん}から{人々|ひとびと}を{救|すく}いました。", "order": 25, "book": "創世記"}, {"id": "q005", "q": "モーセが{神|かみ}から{十戒|じっかい}を{授|さず}かった{山|やま}は?", "answer": "シナイ{山|さん}", "wrong": ["オリーブ{山|さん}", "カルメル{山|さん}", "ネボ{山|さん}"], "cat": "旧約", "theme": "できごと", "level": 2, "ref": "{出|しゅつ}エジプト{記|き} 19〜20{章|しょう}", "note": "エジプトを{出|で}たイスラエルの{民|たみ}は、シナイ{山|さん}のふもとで{神|かみ}と{契約|けいやく}を{結|むす}びました。", "order": 26, "book": "出エジプト記"}, {"id": "h02", "q": "{角笛|つのぶえ}を{吹|ふ}き{鳴|な}らし、エリコの{城壁|じょうへき}を{崩|くず}した{指導|しどう}{者|しゃ}は?", "answer": "ヨシュア", "wrong": ["モーセ", "ギデオン", "カレブ"], "cat": "旧約", "theme": "できごと", "level": 2, "ref": "ヨシュア{記|き} 6{章|しょう}", "note": "{7日|なのか}{間|かん}{町|まち}の{周|まわ}りを{回|まわ}り、{7日|なのか}{目|め}に{城壁|じょうへき}が{崩|くず}れ{落|お}ちました。", "order": 27, "book": "ヨシュア記"}, {"id": "h03", "q": "{怪力|かいりき}で{知|し}られたサムソン。その{力|ちから}の{秘密|ひみつ}は?", "answer": "{髪|かみ}の{毛|け}を{切|き}らないこと", "wrong": ["{身|み}につけた{指輪|ゆびわ}", "{祖父|そふ}の{剣|つるぎ}", "{毎日|まいにち}の{断食|だんじき}"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{士師記|ししき} 16{章|しょう}", "note": "デリラに{秘密|ひみつ}を{明|あ}かして{髪|かみ}を{切|き}られ、{力|ちから}を{失|うしな}いました。", "order": 28, "book": "士師記"}, {"id": "h04", "q": "エルサレムに{最初|さいしょ}の{神殿|しんでん}を{建|た}てた{王|おう}は?", "answer": "ソロモン", "wrong": ["ダビデ", "ヒゼキヤ", "ヨシヤ"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{列王記|れつおうき}{第|だい}{一|いち} 6{章|しょう}", "note": "ダビデの{子|こ}ソロモンは、{知恵|ちえ}ある{王|おう}として{知|し}られます。", "order": 29, "book": "列王記第一"}, {"id": "h05", "q": "ペルシアの{王妃|おうひ}となり、{命|いのち}がけで{王|おう}に{願|ねが}い{出|で}てユダヤ{人|じん}を{救|すく}った{女性|じょせい}は?", "answer": "エステル", "wrong": ["ルツ", "デボラ", "ミリアム"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "エステル{記|き} 4〜8{章|しょう}", "note": "この{出来事|できごと}は、{今|いま}もプリムの{祭|まつ}りとして{祝|いわ}われています。", "order": 30, "book": "エステル記"}, {"id": "q008", "q": "{旧約|きゅうやく}{聖書|せいしょ}の{詩篇|しへん}には、{全部|ぜんぶ}でいくつの{詩|し}が{収|おさ}められている?", "answer": "150", "wrong": ["100", "120", "66"], "cat": "旧約", "theme": "基本", "level": 2, "ref": "{詩篇|しへん}", "note": "{祈|いの}りや{賛美|さんび}、{嘆|なげ}きの{歌|うた}など、150の{詩|し}が{収|おさ}められています。", "order": 31, "book": "詩篇"}, {"id": "h06", "q": "{旧約|きゅうやく}{聖書|せいしょ}は{全部|ぜんぶ}で{何巻|なんかん}?", "answer": "39{巻|かん}", "wrong": ["27{巻|かん}", "50{巻|かん}", "66{巻|かん}"], "cat": "旧約", "theme": "基本", "level": 2, "ref": "{旧約|きゅうやく}{聖書|せいしょ} {目|め}{次|つぎ}", "note": "{新約|しんやく}{聖書|せいしょ}の27{巻|かん}と{合|あ}わせると66{巻|かん}になります。", "order": 32}, {"id": "h07", "q": "イエスがバプテスマのヨハネからバプテスマを{受|う}けた{川|かわ}は?", "answer": "ヨルダン{川|がわ}", "wrong": ["ナイル{川|がわ}", "ユーフラテス{川|がわ}", "ティグリス{川|がわ}"], "cat": "新約", "theme": "できごと", "level": 2, "ref": "マルコの{福音書|ふくいんしょ} 1{章|しょう}", "note": "バプテスマのとき、{神|かみ}の{御霊|みたま}が{鳩|はと}のように{降|ふ}ってきました。", "order": 33}, {"id": "q012", "q": "ヨハネの{福音書|ふくいんしょ}で、イエスが{最初|さいしょ}に{行|い}ったしるし({奇跡|きせき})は?", "answer": "{水|みず}をぶどう{酒|しゅ}に{変|か}えた", "wrong": ["{嵐|あらし}を{静|しず}めた", "{水|みず}の{上|うえ}を{歩|ある}いた", "{目|め}の{見|み}えない{人|ひと}をいやした"], "cat": "新約", "theme": "できごと", "level": 2, "ref": "ヨハネの{福音書|ふくいんしょ} 2{章|しょう}", "note": "ガリラヤのカナで{開|ひら}かれた{婚礼|こんれい}でのできごとです。", "order": 34}, {"id": "h08", "q": "イエスが{墓|はか}から{生|い}き{返|かえ}らせた、マルタとマリアの{兄弟|きょうだい}は?", "answer": "ラザロ", "wrong": ["ザアカイ", "ニコデモ", "バルティマイ"], "cat": "新約", "theme": "できごと", "level": 2, "ref": "ヨハネの{福音書|ふくいんしょ} 11{章|しょう}", "note": "{死|し}んで{4日|よっか}たっていたラザロを、イエスは{呼|よ}び{出|だ}しました。", "order": 35}, {"id": "q015", "q": "「{放蕩|ほうとう}{息子|むすこ}」のたとえで、{帰|かえ}ってきた{弟|おとうと}のために{父|ちち}がしたことは?", "answer": "{祝宴|しゅくえん}を{開|ひら}いた", "wrong": ["{家|いえ}から{追|お}い{出|だ}した", "{雇|やと}い{人|にん}にした", "{財産|ざいさん}をすべて{兄|あに}に{与|あた}えた"], "cat": "新約", "theme": "たとえ話", "level": 2, "ref": "ルカの{福音書|ふくいんしょ} 15{章|しょう}", "note": "{父|ちち}は{遠|とお}くから{息子|むすこ}を{見|み}つけて{走|はし}り{寄|よ}り、{喜|よろこ}んで{迎|むか}え{入|い}れました。", "order": 36}, {"id": "h09", "q": "「タラント」のたとえで、1タラントを{預|あず}かった{僕|しもべ}がしたことは?", "answer": "{地|ち}の{中|なか}に{隠|かく}しておいた", "wrong": ["2{倍|ばい}に{増|ふ}やした", "{貧|まず}しい{人|ひと}に{配|くば}った", "{持|も}って{逃|に}げた"], "cat": "新約", "theme": "たとえ話", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 25{章|しょう}", "note": "5タラントと2タラントを{預|あず}かった{僕|しもべ}は、それを{倍|ばい}に{増|ふ}やしました。", "order": 37}, {"id": "h10", "q": "「{十人|じゅうにん}の{娘|むすめ}」のたとえで、{賢|かしこ}い{娘|むすめ}たちが{用意|ようい}していたものは?", "answer": "{予備|よび}の{油|あぶら}", "wrong": ["{花束|はなたば}", "{新|あたら}しい{衣|ころも}", "パン"], "cat": "新約", "theme": "たとえ話", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 25{章|しょう}", "note": "{花婿|はなむこ}の{到着|とうちゃく}が{遅|おく}れても、ともし{火|ひ}を{絶|た}やさずに{迎|むか}えることができました。", "order": 38}, {"id": "h11", "q": "「からし{種|たね}」のたとえで、からし{種|たね}は{何|なに}にたとえられている?", "answer": "{神|かみ}の{国|くに}", "wrong": ["{弱|よわ}い{信仰|しんこう}", "{罪|つみ}", "{律法|りっぽう}"], "cat": "新約", "theme": "たとえ話", "level": 2, "ref": "マルコの{福音書|ふくいんしょ} 4{章|しょう}", "note": "どんな{種|たね}より{小|ちい}さいのに、{成長|せいちょう}すると{鳥|とり}が{巣|す}を{作|つく}れるほど{大|おお}きくなります。", "order": 39}, {"id": "q016", "q": "{鶏|にわとり}が{鳴|な}く{前|まえ}に、3{度|ど}イエスを{知|し}らないと{言|い}った{弟子|でし}は?", "answer": "ペテロ", "wrong": ["ヨハネ", "トマス", "アンデレ"], "cat": "新約", "theme": "人物", "level": 2, "ref": "ルカの{福音書|ふくいんしょ} 22{章|しょう}", "note": "のちにペテロは{悔|く}い{改|あらた}め、{教会|きょうかい}を{導|みちび}く{使徒|しと}になりました。", "order": 40}, {"id": "q017", "q": "{復活|ふっかつ}したイエスの{傷|きず}に{触|ふ}れるまでは{信|しん}じないと{言|い}った{弟子|でし}は?", "answer": "トマス", "wrong": ["ピリポ", "アンデレ", "ヤコブ"], "cat": "新約", "theme": "人物", "level": 2, "ref": "ヨハネの{福音書|ふくいんしょ} 20{章|しょう}", "note": "{8日|ようか}{後|ご}にイエスが{現|あらわ}れ、トマスは{信仰|しんこう}を{告白|こくはく}しました。", "order": 41}, {"id": "q018", "q": "ダマスコへ{向|む}かう{途中|とちゅう}で{光|ひかり}に{打|う}たれ、{回心|かいしん}したのは?", "answer": "パウロ(サウロ)", "wrong": ["バルナバ", "ステパノ", "ルカ"], "cat": "新約", "theme": "人物", "level": 2, "ref": "{使徒|しと}の{働|はたら}き 9{章|しょう}", "note": "{教会|きょうかい}を{迫害|はくがい}していたサウロは、のちに{各|かく}{地|ち}へ{福音|ふくいん}を{伝|つた}える{使徒|しと}パウロになりました。", "order": 42}, {"id": "h12", "q": "{新約|しんやく}{聖書|せいしょ}の{福音書|ふくいんしょ}は{何冊|なんさつ}?", "answer": "4{冊|さつ}", "wrong": ["2{冊|さつ}", "3{冊|さつ}", "5{冊|さつ}"], "cat": "新約", "theme": "基本", "level": 2, "ref": "{新約|しんやく}{聖書|せいしょ} {目|め}{次|つぎ}", "note": "マタイ、マルコ、ルカ、ヨハネの4つです。", "order": 43}, {"id": "q020", "q": "{新約|しんやく}{聖書|せいしょ}は{全部|ぜんぶ}で{何巻|なんかん}?", "answer": "27{巻|かん}", "wrong": ["39{巻|かん}", "66{巻|かん}", "12{巻|かん}"], "cat": "新約", "theme": "基本", "level": 2, "ref": "{新約|しんやく}{聖書|せいしょ} {目|め}{次|つぎ}", "note": "{旧約|きゅうやく}{聖書|せいしょ}の39{巻|かん}と{合|あ}わせると、{聖書|せいしょ}は{全部|ぜんぶ}で66{巻|かん}です。", "order": 44}, {"id": "q021", "q": "{聖書|せいしょ}の{最後|さいご}に{置|お}かれている{書|しょ}は?", "answer": "ヨハネの{黙示録|もくしろく}", "wrong": ["ユダの{手紙|てがみ}", "ヨハネの{手紙|てがみ}{第|だい}{三|さん}", "マラキ{書|しょ}"], "cat": "新約", "theme": "基本", "level": 2, "ref": "ヨハネの{黙示録|もくしろく} 22{章|しょう}", "note": "{新|あたら}しい{天|てん}と{新|あたら}しい{地|ち}の{幻|まぼろし}で、{聖書|せいしょ}{全体|ぜんたい}が{締|し}めくくられます。", "order": 45}, {"id": "h13", "q": "{聖書|せいしょ}の{中|なか}で{最も|もっと}{長生|ながい}きした{人物|じんぶつ}は?", "answer": "メトシェラ", "wrong": ["ノア", "アダム", "エノク"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "{創世記|そうせいき} 5{章|しょう}", "note": "969{歳|さい}まで{生|い}きたと{記|しる}されています。", "order": 46, "book": "創世記"}, {"id": "q006", "q": "{乗|の}っていたロバが{口|くち}をきいて、たしなめられた{人物|じんぶつ}は?", "answer": "バラム", "wrong": ["バラク", "ギデオン", "エリシャ"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "{民数記|みんすうき} 22{章|しょう}", "note": "{道|みち}をふさぐ{主|しゅ}の{使|つか}いがロバには{見|み}えていて、バラムには{見|み}えていませんでした。", "order": 47, "book": "民数記"}, {"id": "h14", "q": "{夫|おっと}を{亡|な}くしたあとも{姑|しゅうとめ}ナオミのもとを{離|はな}れず、ダビデの{曾祖母|そうそぼ}となった{女性|じょせい}は?", "answer": "ルツ", "wrong": ["オルパ", "エステル", "ハンナ"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "ルツ{記|き} 1{章|しょう}、4{章|しょう}", "note": "モアブ{出身|しゅっしん}のルツは、ナオミの{神|かみ}を{自分|じぶん}の{神|かみ}とすると{誓|ちか}いました。", "order": 48, "book": "ルツ記"}, {"id": "h15", "q": "{預言者|よげんしゃ}エリヤが、バアルの{預言者|よげんしゃ}たちと{対決|たいけつ}した{山|やま}は?", "answer": "カルメル{山|さん}", "wrong": ["シナイ{山|さん}", "タボル{山|さん}", "ギルボア{山|さん}"], "cat": "旧約", "theme": "できごと", "level": 3, "ref": "{列王記|れつおうき}{第|だい}{一|いち} 18{章|しょう}", "note": "エリヤの{祈|いの}りに{応|こた}えて、{天|てん}から{火|ひ}が{降|ふ}りました。", "order": 49, "book": "列王記第一"}, {"id": "h16", "q": "エリヤが{天|てん}に{上|あ}げられたあと、その{働|はたら}きを{受|う}け{継|つ}いだ{預言者|よげんしゃ}は?", "answer": "エリシャ", "wrong": ["エレミヤ", "ヨナ", "アモス"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "{列王記|れつおうき}{第|だい}{二|に} 2{章|しょう}", "note": "エリヤが{残|のこ}した{外套|がいとう}を{拾|ひろ}い、ヨルダン{川|がわ}を{分|わ}けて{渡|わた}りました。", "order": 50, "book": "列王記第二"}, {"id": "h17", "q": "モーセ{五|ご}{書|しょ}に{含|ふく}まれない{書|しょ}はどれ?", "answer": "ヨシュア{記|き}", "wrong": ["{民数記|みんすうき}", "レビ{記|き}", "{申命記|しんめいき}"], "cat": "旧約", "theme": "基本", "level": 3, "ref": "{旧約|きゅうやく}{聖書|せいしょ} {目|め}{次|つぎ}", "note": "モーセ{五|ご}{書|しょ}は{創世記|そうせいき}、{出|しゅつ}エジプト{記|き}、レビ{記|き}、{民数記|みんすうき}、{申命記|しんめいき}です。", "order": 51}, {"id": "h18", "q": "「ぶどう{園|えん}の{労働|ろうどう}{者|しゃ}」のたとえで、{最後|さいご}の1{時間|じかん}だけ{働|はたら}いた{人|ひと}が{受|う}け{取|と}った{賃金|ちんぎん}は?", "answer": "{朝|あさ}から{働|はたら}いた{人|ひと}と{同|おな}じ1デナリ", "wrong": ["{何|なに}も{受|う}け{取|と}らなかった", "{朝|あさ}から{働|はたら}いた{人|ひと}の{半分|はんぶん}", "{朝|あさ}から{働|はたら}いた{人|ひと}の2{倍|ばい}"], "cat": "新約", "theme": "たとえ話", "level": 3, "ref": "マタイの{福音書|ふくいんしょ} 20{章|しょう}", "note": "{主人|しゅじん}の{気前|きまえ}のよさを{通|とお}して、{神|かみ}の{恵|めぐ}みが{語|かた}られています。", "order": 52}, {"id": "h19", "q": "ルカ16{章|しょう}のたとえで、{金持|かねも}ちの{家|いえ}の{門|もん}{前|まえ}に{横|よこ}たわっていた{貧|まず}しい{人|ひと}の{名前|なまえ}は?", "answer": "ラザロ", "wrong": ["ザアカイ", "バルティマイ", "ニコデモ"], "cat": "新約", "theme": "たとえ話", "level": 3, "ref": "ルカの{福音書|ふくいんしょ} 16{章|しょう}", "note": "イエスのたとえ{話|ばなし}の{中|なか}で、{名前|なまえ}が{出|で}てくる{唯一|ゆいいつ}の{人物|じんぶつ}です。", "order": 53}, {"id": "h20", "q": "{夜|よる}ひそかにイエスを{訪|たず}ね、「{新|あたら}しく{生|う}まれる」ことについて{語|かた}り{合|あ}った{議員|ぎいん}は?", "answer": "ニコデモ", "wrong": ["アリマタヤのヨセフ", "ガマリエル", "カヤパ"], "cat": "新約", "theme": "人物", "level": 3, "ref": "ヨハネの{福音書|ふくいんしょ} 3{章|しょう}", "note": "ニコデモは、のちにイエスの{埋葬|まいそう}にも{立|た}ち{会|あ}いました。", "order": 54}, {"id": "h21", "q": "{十字|じゅうじ}{架|か}の{前夜|ぜんや}、イエスが{苦|くる}しみもだえて{祈|いの}った{場所|ばしょ}は?", "answer": "ゲツセマネ", "wrong": ["ゴルゴタ", "ベタニア", "エマオ"], "cat": "新約", "theme": "できごと", "level": 3, "ref": "マルコの{福音書|ふくいんしょ} 14{章|しょう}", "note": "{弟子|でし}たちは、{祈|いの}りの{間|あいだ}に{眠|ねむ}ってしまいました。", "order": 55}, {"id": "h22", "q": "{裏切|うらぎ}ったユダに{代|か}わって、{十二使徒|じゅうにしと}に{加|くわ}えられたのは?", "answer": "マッティア", "wrong": ["バルナバ", "ステパノ", "シラス"], "cat": "新約", "theme": "人物", "level": 3, "ref": "{使徒|しと}の{働|はたら}き 1{章|しょう}", "note": "くじによって{選|えら}ばれました。", "order": 56}, {"id": "h23", "q": "{教会|きょうかい}で{最初|さいしょ}の{殉教者|じゅんきょうしゃ}として、{石|いし}で{打|う}たれて{亡|な}くなったのは?", "answer": "ステパノ", "wrong": ["ヤコブ", "ペテロ", "ピリポ"], "cat": "新約", "theme": "人物", "level": 3, "ref": "{使徒|しと}の{働|はたら}き 7{章|しょう}", "note": "その{場|ば}には、のちのパウロであるサウロもいました。", "order": 57}, {"id": "h24", "q": "ローマへ{護送|ごそう}される{途中|とちゅう}で{船|ふね}が{難破|なんぱ}し、パウロが{上陸|じょうりく}した{島|しま}は?", "answer": "マルタ{島|とう}", "wrong": ["キプロス{島|とう}", "クレタ{島|とう}", "パトモス{島|とう}"], "cat": "新約", "theme": "できごと", "level": 3, "ref": "{使徒|しと}の{働|はたら}き 27〜28{章|しょう}", "note": "{島|しま}でまむしにかまれても、パウロは{何|なに}の{害|がい}も{受|う}けませんでした。", "order": 58}, {"id": "q019", "q": "「{愛|あい}の{賛歌|さんか}」と{呼|よ}ばれる{章|しょう}が{含|ふく}まれている{手紙|てがみ}は?", "answer": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち}", "wrong": ["ローマ{人|じん}への{手紙|てがみ}", "ガラテヤ{人|じん}への{手紙|てがみ}", "ヤコブの{手紙|てがみ}"], "cat": "新約", "theme": "基本", "level": 3, "ref": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち} 13{章|しょう}", "note": "{信仰|しんこう}と{希望|きぼう}と{愛|あい}のうち、いちばんすぐれているのは{愛|あい}だと{結|むす}ばれます。", "order": 59}, {"id": "k15", "q": "かみさまは なん{日|にち}で せかいを つくり、なん{日|にち}{目|め}に やすんだ?", "answer": "{6日|むいか}で つくり、{7日|なのか}{目|め}に やすんだ", "wrong": ["{3日|みっか}で つくり、{4日|よっか}{目|め}に やすんだ", "{7日|なのか}で つくり、{8日|ようか}{目|め}に やすんだ", "{10日|とおか}で つくり、11{日|にち}{目|め}に やすんだ"], "cat": "旧約", "theme": "できごと", "level": 1, "ref": "{創世記|そうせいき} 1〜2{章|しょう}", "note": "{7日|なのか}{目|め}を{神|かみ}さまは{祝福|しゅくふく}し、{聖|せい}なる{日|ひ}とされました。", "order": 60, "book": "創世記"}, {"id": "k16", "q": "エデンの そのに いた エバに、{木|き}の みを たべるように さそったのは?", "answer": "へび", "wrong": ["ライオン", "からす", "ねずみ"], "cat": "旧約", "theme": "できごと", "level": 1, "ref": "{創世記|そうせいき} 3{章|しょう}", "note": "{食|た}べてはいけないと{言|い}われていた{木|き}の{実|み}を、エバとアダムは{食|た}べてしまいました。", "order": 61, "book": "創世記"}, {"id": "k17", "q": "ノアの はこぶねに、どうぶつたちは どのように のった?", "answer": "オスと メスの ひとくみずつ", "wrong": ["1ぴきずつ", "こどもだけ", "とりだけ"], "cat": "旧約", "theme": "できごと", "level": 1, "ref": "{創世記|そうせいき} 6〜7{章|しょう}", "note": "すべての{生|い}き{物|もの}がつがいで{箱舟|はこぶね}に{入|はい}りました。{清|きよ}い{動物|どうぶつ}と{鳥|とり}は7つがいずつでした。", "order": 62, "book": "創世記"}, {"id": "k18", "q": "あかちゃんの モーセが いれられて、{川|かわ}に うかべられたのは?", "answer": "かご", "wrong": ["たる", "ふね", "なべ"], "cat": "旧約", "theme": "人物", "level": 1, "ref": "{出|しゅつ}エジプト{記|き} 2{章|しょう}", "note": "パピルスのかごに{入|い}れられ、ファラオの{王女|おうじょ}に{助|たす}けられました。", "order": 63, "book": "出エジプト記"}, {"id": "k19", "q": "かみさまが モーセに はなしかけたとき、もえているのに もえつきなかったのは?", "answer": "しばの{木|き}", "wrong": ["{大|おお}きな いし", "{火|ひ}の{山|やま}", "モーセの つえ"], "cat": "旧約", "theme": "できごと", "level": 1, "ref": "{出|しゅつ}エジプト{記|き} 3{章|しょう}", "note": "{燃|も}える{柴|しば}の{中|なか}から{神|かみ}さまはモーセを{呼|よ}び、エジプトへ{遣|つか}わしました。", "order": 64, "book": "出エジプト記"}, {"id": "k20", "q": "イエスさまの ところに つれてこられた こどもたちを、イエスさまは どうした?", "answer": "だきあげて しゅくふくした", "wrong": ["おいかえした", "しかった", "べんきょうさせた"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "マルコの{福音書|ふくいんしょ} 10{章|しょう}", "note": "{神|かみ}の{国|くに}はこのような{者|もの}たちのものだ、とイエスさまは{言|い}いました。", "order": 65}, {"id": "k21", "q": "ふねで ねていた イエスさまが、おきて しずめたものは?", "answer": "あらし", "wrong": ["かじ", "けんか", "じしん"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "マルコの{福音書|ふくいんしょ} 4{章|しょう}", "note": "{風|かぜ}と{湖|みずうみ}をしかると、すっかり{静|しず}かになりました。", "order": 66}, {"id": "k22", "q": "イエスさまが「わたしは よい ○○ である」と いったのは?", "answer": "ひつじかい", "wrong": ["りょうし", "おうさま", "だいく"], "cat": "新約", "theme": "人物", "level": 1, "ref": "ヨハネの{福音書|ふくいんしょ} 10{章|しょう}", "note": "よい{羊飼|ひつじか}いは、{羊|ひつじ}のために{命|いのち}を{捨|す}てるとイエスさまは{語|かた}りました。", "order": 67}, {"id": "k23", "q": "ペテロの もとの しごとは?", "answer": "りょうし", "wrong": ["ひつじかい", "だいく", "へいたい"], "cat": "新約", "theme": "人物", "level": 1, "ref": "マタイの{福音書|ふくいんしょ} 4{章|しょう}", "note": "「{人間|にんげん}をとる{漁師|りょうし}にしよう」と{言|い}われ、{網|あみ}を{捨|す}ててイエスさまに{従|したが}いました。", "order": 68}, {"id": "k24", "q": "イエスさまが ろばに のって はいった {町|まち}は?", "answer": "エルサレム", "wrong": ["ベツレヘム", "ナザレ", "ローマ"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "マルコの{福音書|ふくいんしょ} 11{章|しょう}", "note": "{人々|ひとびと}は{服|ふく}や{木|き}の{枝|えだ}を{道|みち}に{敷|し}いて、イエスさまを{迎|むか}えました。", "order": 69}, {"id": "k25", "q": "{聖書|せいしょ}は ぜんぶで なんかん?", "answer": "66かん", "wrong": ["12かん", "39かん", "100かん"], "cat": "共通", "theme": "基本", "level": 1, "ref": "{聖書|せいしょ} {目|め}{次|つぎ}", "note": "{旧約|きゅうやく}{聖書|せいしょ}39{巻|かん}と{新約|しんやく}{聖書|せいしょ}27{巻|かん}を{合|あ}わせて66{巻|かん}です。", "order": 70}, {"id": "k26", "q": "イエスさまは じぶんを なんの {木|き}に たとえた?", "answer": "ぶどうの{木|き}", "wrong": ["オリーブの{木|き}", "いちじくの{木|き}", "りんごの{木|き}"], "cat": "新約", "theme": "たとえ話", "level": 1, "ref": "ヨハネの{福音書|ふくいんしょ} 15{章|しょう}", "note": "わたしはぶどうの{木|き}、あなたがたはその{枝|えだ}である、と{語|かた}りました。", "order": 71}, {"id": "k27", "q": "「いえを たてた {二人|ふたり}」の たとえで、あらしに まけなかった いえは どこに たてた?", "answer": "いわの {上|うえ}", "wrong": ["すなの {上|うえ}", "{木|き}の {上|うえ}", "{川|かわ}の {中|なか}"], "cat": "新約", "theme": "たとえ話", "level": 1, "ref": "マタイの{福音書|ふくいんしょ} 7{章|しょう}", "note": "イエスさまの{言葉|ことば}を{聞|き}いて{行|おこな}う{人|ひと}は、{岩|いわ}の{上|うえ}に{家|いえ}を{建|た}てた{人|ひと}に{似|に}ています。", "order": 72}, {"id": "k28", "q": "「なくした ぎんか」の たとえで、{女|おんな}の{人|ひと}が もっていた ぎんかは なんまい?", "answer": "10まい", "wrong": ["3まい", "12まい", "100まい"], "cat": "新約", "theme": "たとえ話", "level": 1, "ref": "ルカの{福音書|ふくいんしょ} 15{章|しょう}", "note": "なくした1{枚|まい}を{見|み}つけるまで、{家|いえ}を{掃|は}いて{探|さが}しました。", "order": 73}, {"id": "n01", "q": "アダムとエバの{息子|むすこ}で、{弟|おとうと}アベルを{殺|ころ}してしまったのは?", "answer": "カイン", "wrong": ["セツ", "エノク", "レメク"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{創世記|そうせいき} 4{章|しょう}", "note": "{人類|じんるい}{最初|さいしょ}の{兄弟|きょうだい}のできごとです。", "order": 74, "book": "創世記"}, {"id": "n02", "q": "バベルの{塔|とう}を{建|た}てようとした{人々|ひとびと}に{起|お}きたことは?", "answer": "{言葉|ことば}が{混乱|こんらん}し、{通|つう}じなくなった", "wrong": ["{塔|とう}が{天|てん}に{届|とど}いた", "{洪水|こうずい}が{起|お}きた", "{天|てん}から{火|ひ}が{降|ふ}った"], "cat": "旧約", "theme": "できごと", "level": 2, "ref": "{創世記|そうせいき} 11{章|しょう}", "note": "{人々|ひとびと}は{全|ぜん}{地|ち}に{散|ち}らされました。", "order": 75, "book": "創世記"}, {"id": "n03", "q": "{神|かみ}に{試|ため}され、アブラハムが{献げ|ささ}ようとした{息子|むすこ}は?", "answer": "イサク", "wrong": ["イシュマエル", "ヤコブ", "ヨセフ"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{創世記|そうせいき} 22{章|しょう}", "note": "{主|しゅ}の{使|つか}いが{呼|よ}びかけて{止|と}め、{代|か}わりに{雄羊|おひつじ}が{献げ|ささ}られました。", "order": 76, "book": "創世記"}, {"id": "n04", "q": "エサウが{一杯|いっぱい}の{煮物|にもの}と{引|ひ}き{換|か}えに、{弟|おとうと}ヤコブに{譲|ゆず}ってしまったものは?", "answer": "{長子|ちょうし}の{権利|けんり}", "wrong": ["{羊|ひつじ}の{群|む}れ", "{父|ちち}の{家|いえ}", "{井戸|いど}"], "cat": "旧約", "theme": "できごと", "level": 2, "ref": "{創世記|そうせいき} 25{章|しょう}", "note": "{空腹|くうふく}だったエサウは、{軽々|かるがる}しく{長子|ちょうし}の{権利|けんり}を{譲|ゆず}りました。", "order": 77, "book": "創世記"}, {"id": "n05", "q": "ヨセフが{父|ちち}ヤコブから{特別|とくべつ}にもらい、{兄|あに}たちのねたみを{買|か}ったものは?", "answer": "{特別|とくべつ}な{長服|ちょうふく}", "wrong": ["{金|きん}の{指輪|ゆびわ}", "{銀|ぎん}の{杯|さかずき}", "{羊|ひつじ}の{群|む}れ"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{創世記|そうせいき} 37{章|しょう}", "note": "{兄|あに}たちはヨセフを{売|う}り、{晴|は}れ{着|ぎ}に{血|ち}をつけて{父|ちち}に{見|み}せました。", "order": 78, "book": "創世記"}, {"id": "n06", "q": "{出|しゅつ}エジプトの{直前|ちょくぜん}、エジプトに{下|くだ}った{十|とお}の{災|わざわ}いの{最後|さいご}は?", "answer": "{長子|ちょうし}の{死|し}", "wrong": ["いなごの{大群|たいぐん}", "{暗闇|くらやみ}", "ぶよ"], "cat": "旧約", "theme": "できごと", "level": 2, "ref": "{出|しゅつ}エジプト{記|き} 11〜12{章|しょう}", "note": "イスラエルの{家|いえ}は{小羊|こひつじ}の{血|ち}のしるしで{守|まも}られ、これが{過越|すぎこし}の{祭|まつ}りの{起源|きげん}となりました。", "order": 79, "book": "出エジプト記"}, {"id": "n07", "q": "{荒|あ}れ{野|の}で、{神|かみ}が{毎朝|まいあさ}{天|てん}から{降|ふ}らせた{食|た}べ{物|もの}は?", "answer": "マナ", "wrong": ["パン{種|たね}", "なつめやし", "{蜂蜜|はちみつ}"], "cat": "旧約", "theme": "できごと", "level": 2, "ref": "{出|しゅつ}エジプト{記|き} 16{章|しょう}", "note": "{夕方|ゆうがた}にはうずらも{与|あた}えられました。", "order": 80, "book": "出エジプト記"}, {"id": "n08", "q": "エジプトを{出|で}たイスラエルの{民|たみ}が、{荒|あ}れ{野|の}を{旅|たび}した{年数|ねんすう}は?", "answer": "40{年|ねん}", "wrong": ["7{年|ねん}", "12{年|ねん}", "70{年|ねん}"], "cat": "旧約", "theme": "できごと", "level": 2, "ref": "{民数記|みんすうき} 14{章|しょう}", "note": "{約束|やくそく}の{地|ち}を{前|まえ}に{神|かみ}を{信頼|しんらい}しなかったため、40{年|ねん}さまようことになりました。", "order": 81, "book": "民数記"}, {"id": "n09", "q": "{少年|しょうねん}サムエルを{神殿|しんでん}で{育|そだ}てた{祭司|さいし}は?", "answer": "エリ", "wrong": ["アロン", "ナタン", "ツァドク"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "サムエル{記|き}{第|だい}{一|いち} 3{章|しょう}", "note": "{夜|よる}、{主|しゅ}に{呼|よ}ばれたサムエルは、そのことばに{耳|みみ}を{傾|かたむ}けると{答|こた}えました。", "order": 82, "book": "サムエル記第一"}, {"id": "n10", "q": "イスラエル{最初|さいしょ}の{王|おう}は?", "answer": "サウル", "wrong": ["ダビデ", "ソロモン", "サムエル"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "サムエル{記|き}{第|だい}{一|いち} 10{章|しょう}", "note": "{預言者|よげんしゃ}サムエルが{油|あぶら}を{注|そそ}いで{王|おう}としました。", "order": 83, "book": "サムエル記第一"}, {"id": "n11", "q": "ダビデ{王|おう}の{罪|つみ}を、たとえ{話|ばなし}を{使|つか}って{指摘|してき}した{預言者|よげんしゃ}は?", "answer": "ナタン", "wrong": ["エリヤ", "イザヤ", "サムエル"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "サムエル{記|き}{第|だい}{二|に} 12{章|しょう}", "note": "{貧|まず}しい{男|おとこ}の{小羊|こひつじ}を{奪|うば}う{金持|かねも}ちのたとえで、ダビデに{悔|く}い{改|あらた}めを{迫|せま}りました。", "order": 84, "book": "サムエル記第二"}, {"id": "n12", "q": "すべてを{失|うしな}っても{神|かみ}を{呪|のろ}わず、{忍耐|にんたい}の{人|ひと}として{知|し}られるのは?", "answer": "ヨブ", "wrong": ["ヨナ", "ヨエル", "ヨシヤ"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "ヨブ{記|き} 1〜2{章|しょう}", "note": "{新約|しんやく}のヤコブの{手紙|てがみ}でも、ヨブの{忍耐|にんたい}が{語|かた}られています。", "order": 85, "book": "ヨブ記"}, {"id": "n13", "q": "{新約|しんやく}{聖書|せいしょ}の{最初|さいしょ}の{書|しょ}は?", "answer": "マタイの{福音書|ふくいんしょ}", "wrong": ["マルコの{福音書|ふくいんしょ}", "ルカの{福音書|ふくいんしょ}", "ヨハネの{福音書|ふくいんしょ}"], "cat": "新約", "theme": "基本", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 1{章|しょう}", "note": "アブラハムから{始|はじ}まるイエスの{系図|けいず}で{始|はじ}まります。", "order": 86}, {"id": "n14", "q": "イエスが「{主|しゅ}の{祈|いの}り」を{教|おし}えたことが{記|しる}されている、マタイ{福音書|ふくいんしょ}の{説教|せっきょう}は?", "answer": "{山上|さんじょう}の{説教|せっきょう}", "wrong": ["{湖畔|こはん}の{説教|せっきょう}", "{神殿|しんでん}での{説教|せっきょう}", "{最後|さいご}の{晩餐|ばんさん}の{説教|せっきょう}"], "cat": "新約", "theme": "基本", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 5〜7{章|しょう}", "note": "「{心|こころ}の{貧|まず}しい{人々|ひとびと}は、{幸|さいわ}いである」で{始|はじ}まる{教|おし}えも、この{説教|せっきょう}にあります。", "order": 87}, {"id": "n15", "q": "バプテスマのヨハネが{荒|あ}れ{野|の}で{食|た}べていたものは?", "answer": "いなごと{野蜜|のみつ}", "wrong": ["マナとうずら", "パンと{魚|さかな}", "いちじくとぶどう"], "cat": "新約", "theme": "人物", "level": 2, "ref": "マルコの{福音書|ふくいんしょ} 1{章|しょう}", "note": "らくだの{毛|け}{衣|ころも}を{着|き}て、{腰|こし}に{革|かわ}の{帯|おび}を{締|し}めていました。", "order": 88}, {"id": "n16", "q": "{銀貨|ぎんか}30{枚|まい}でイエスを{裏切|うらぎ}った{弟子|でし}は?", "answer": "イスカリオテのユダ", "wrong": ["ペテロ", "トマス", "マタイ"], "cat": "新約", "theme": "人物", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 26{章|しょう}", "note": "{接吻|せっぷん}を{合図|あいず}に、イエスを{引|ひ}き{渡|わた}しました。", "order": 89}, {"id": "n17", "q": "{収税所|しゅうぜいじょ}に{座|すわ}っていたところをイエスに{呼|よ}ばれ、{弟子|でし}になった{取税人|しゅぜいにん}は?", "answer": "マタイ", "wrong": ["ペテロ", "ヨハネ", "アンデレ"], "cat": "新約", "theme": "人物", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 9{章|しょう}", "note": "「わたしに{従|したが}いなさい」と{言|い}われ、{立|た}ち{上|あ}がって{従|したが}いました。", "order": 90}, {"id": "n18", "q": "{五旬節|ごじゅんせつ}(ペンテコステ)の{日|ひ}、{集|あつ}まっていた{弟子|でし}たちに{起|お}きたことは?", "answer": "{聖霊|せいれい}が{降|ふ}り、ほかの{国々|くにぐに}の{言葉|ことば}で{話|はな}し{出|だ}した", "wrong": ["{御使|みつか}いに{牢|ろう}から{助|たす}け{出|だ}された", "イエスが{天|てん}に{上|あ}げられた", "{地震|じしん}で{神殿|しんでん}が{崩|くず}れた"], "cat": "新約", "theme": "できごと", "level": 2, "ref": "{使徒|しと}の{働|はたら}き 2{章|しょう}", "note": "この{日|ひ}に{多|おお}くの{人|ひと}がバプテスマを{受|う}け、{教会|きょうかい}の{始|はじ}まりとされています。", "order": 91}, {"id": "n19", "q": "「{畑|はたけ}に{隠|かく}された{宝|たから}」のたとえで、{宝|たから}を{見|み}つけた{人|ひと}がしたことは?", "answer": "{持|も}ち{物|もの}をすっかり{売|う}って、その{畑|はたけ}を{買|か}った", "wrong": ["{宝|たから}を{持|も}ち{逃|に}げした", "{友人|ゆうじん}と{分|わ}け{合|あ}った", "{王|おう}に{献げ|ささ}た"], "cat": "新約", "theme": "たとえ話", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 13{章|しょう}", "note": "{天|てん}の{御国|みくに}の{価値|かち}は、すべてを{手|て}{放|はな}すほど{大|おお}きいことを{表|あらわ}しています。", "order": 92}, {"id": "n20", "q": "「パリサイ{人|びと}と{取税人|しゅぜいにん}」のたとえで、{神|かみ}に{義|ぎ}とされて{家|いえ}に{帰|かえ}ったのは?", "answer": "{取税人|しゅぜいにん}", "wrong": ["パリサイ{人|びと}", "{両方|りょうほう}", "どちらでもない"], "cat": "新約", "theme": "たとえ話", "level": 2, "ref": "ルカの{福音書|ふくいんしょ} 18{章|しょう}", "note": "{胸|むね}を{打|う}ちながら「{罪人|つみびと}のわたしを{憐|あわ}れんでください」と{祈|いの}った{取税人|しゅぜいにん}でした。", "order": 93}, {"id": "n21", "q": "「{愚|おろ}かな{金持|かねも}ち」のたとえで、{豊作|ほうさく}になった{金持|かねも}ちが{考|かんが}えたことは?", "answer": "{倉|くら}を{壊|こわ}して、もっと{大|おお}きな{倉|くら}を{建|た}てる", "wrong": ["{収穫|しゅうかく}を{貧|まず}しい{人|ひと}に{配|くば}る", "{旅|たび}に{出|で}る", "{神殿|しんでん}に{献げ|ささ}る"], "cat": "新約", "theme": "たとえ話", "level": 2, "ref": "ルカの{福音書|ふくいんしょ} 12{章|しょう}", "note": "その{夜|よる}、{神|かみ}は「{今夜|こんや}、お{前|まえ}の{命|いのち}は{取|と}り{上|あ}げられる」と{告|つ}げました。", "order": 94}, {"id": "r01", "q": "{神|かみ}と{共|とも}に{歩|あゆ}み、{神|かみ}に{取|と}られていなくなったと{記|しる}される{人物|じんぶつ}は?", "answer": "エノク", "wrong": ["メトシェラ", "レメク", "セツ"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "{創世記|そうせいき} 5{章|しょう}", "note": "エノクはメトシェラの{父|ちち}です。", "order": 95, "book": "創世記"}, {"id": "r02", "q": "ミディアン{人|じん}との{戦|たたか}いで、ギデオンが{率|ひき}いた{兵|へい}の{数|かず}は?", "answer": "300{人|にん}", "wrong": ["12{人|にん}", "3000{人|にん}", "1{万|まん}{人|にん}"], "cat": "旧約", "theme": "できごと", "level": 3, "ref": "{士師記|ししき} 7{章|しょう}", "note": "{神|かみ}は{兵|へい}を{減|へ}らさせ、{人|ひと}の{力|ちから}ではなく{神|かみ}による{勝利|しょうり}であることを{示|しめ}しました。", "order": 96, "book": "士師記"}, {"id": "r03", "q": "{士師|しし}としてイスラエルを{裁|さば}いた{女預言者|おんなよげんしゃ}は?", "answer": "デボラ", "wrong": ["ヤエル", "ハンナ", "ミリアム"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "{士師記|ししき} 4〜5{章|しょう}", "note": "なつめやしの{木|き}の{下|した}で{人々|ひとびと}を{裁|さば}き、デボラの{歌|うた}も{残|のこ}されています。", "order": 97, "book": "士師記"}, {"id": "r04", "q": "{燃|も}え{盛|さか}る{炉|ろ}に{投|な}げ{込|こ}まれても{無事|ぶじ}だった3{人|にん}に{含|ふく}まれるのは?", "answer": "シャデラク", "wrong": ["ダニエル", "エズラ", "ネヘミヤ"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "ダニエル{書|しょ} 3{章|しょう}", "note": "3{人|にん}はシャデラク、メシャク、アベデ・ネゴです。", "order": 98, "book": "ダニエル書"}, {"id": "r05", "q": "バビロン{捕囚|ほしゅう}からの{帰還|きかん}{後|ご}、エルサレムの{城壁|じょうへき}{再建|さいけん}を{指揮|しき}したのは?", "answer": "ネヘミヤ", "wrong": ["エズラ", "ゼルバベル", "ハガイ"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "ネヘミヤ{記|き} 2〜6{章|しょう}", "note": "{城壁|じょうへき}は{52日|ごじゅうににち}で{完成|かんせい}したと{記|しる}されています。", "order": 99, "book": "ネヘミヤ記"}, {"id": "r06", "q": "4つの{福音書|ふくいんしょ}のうち、{最も|もっと}{短|みじか}いのは?", "answer": "マルコの{福音書|ふくいんしょ}", "wrong": ["マタイの{福音書|ふくいんしょ}", "ルカの{福音書|ふくいんしょ}", "ヨハネの{福音書|ふくいんしょ}"], "cat": "新約", "theme": "基本", "level": 3, "ref": "マルコの{福音書|ふくいんしょ}", "note": "{全|ぜん}16{章|しょう}で、4つの{中|なか}で{最も|もっと}{早|はや}く{書|か}かれたとする{説|せつ}が{有力|ゆうりょく}です。", "order": 100}, {"id": "r07", "q": "ルカの{福音書|ふくいんしょ}と{使徒|しと}の{働|はたら}きが{献げ|ささ}られている{人物|じんぶつ}は?", "answer": "テオフィロ", "wrong": ["テモテ", "テトス", "ピレモン"], "cat": "新約", "theme": "基本", "level": 3, "ref": "ルカの{福音書|ふくいんしょ} 1{章|しょう}、{使徒|しと}の{働|はたら}き 1{章|しょう}", "note": "2つの{書|しょ}は、{同|おな}じ{著者|ちょしゃ}による{前編|ぜんぺん}と{後編|こうへん}と{考|かんが}えられています。", "order": 101}, {"id": "r08", "q": "コリントでパウロと{共|とも}に{天幕|てんまく}{作|つく}りをした{夫婦|ふうふ}は?", "answer": "アキラとプリスキラ", "wrong": ["アナニアとサッピラ", "ザカリヤとエリサベツ", "ヨセフとマリア"], "cat": "新約", "theme": "人物", "level": 3, "ref": "{使徒|しと}の{働|はたら}き 18{章|しょう}", "note": "のちに{各|かく}{地|ち}の{教会|きょうかい}を{支|ささ}える{働|はたら}き{手|て}になりました。", "order": 102}, {"id": "r09", "q": "パトモス{島|とう}で{幻|まぼろし}を{見|み}て、{黙示録|もくしろく}を{記|しる}したとされるのは?", "answer": "ヨハネ", "wrong": ["パウロ", "ペテロ", "ルカ"], "cat": "新約", "theme": "人物", "level": 3, "ref": "ヨハネの{黙示録|もくしろく} 1{章|しょう}", "note": "{島|しま}にいたのは、{神|かみ}の{言葉|ことば}とイエスの{証|あか}しのためだったと{記|しる}されています。", "order": 103}, {"id": "r10", "q": "「やもめと{裁判|さいばん}{官|かん}」のたとえで、イエスが{教|おし}えようとしたことは?", "answer": "{気|き}を{落|お}とさずに{絶|た}えず{祈|いの}ること", "wrong": ["{財産|ざいさん}を{蓄|たくわ}えること", "{裁判|さいばん}を{避|さ}けること", "{断食|だんじき}の{大切|たいせつ}さ"], "cat": "新約", "theme": "たとえ話", "level": 3, "ref": "ルカの{福音書|ふくいんしょ} 18{章|しょう}", "note": "{神|かみ}を{畏|おそ}れない{裁判|さいばん}{官|かん}でさえ、しつこく{願|ねが}うやもめの{訴|うった}えを{聞|き}き{入|い}れました。", "order": 104}, {"id": "r11", "q": "「{仲間|なかま}を{赦|ゆる}さない{家来|けらい}」のたとえで、{王|おう}が{家来|けらい}に{帳消|ちょうけ}しにした{借金|しゃっきん}は?", "answer": "1{万|まん}タラント", "wrong": ["100デナリ", "{銀貨|ぎんか}30{枚|まい}", "1タラント"], "cat": "新約", "theme": "たとえ話", "level": 3, "ref": "マタイの{福音書|ふくいんしょ} 18{章|しょう}", "note": "{赦|ゆる}された{家来|けらい}は、{仲間|なかま}の100デナリの{借金|しゃっきん}を{赦|ゆる}しませんでした。", "order": 105}, {"id": "r12", "q": "エリコの{道|みち}ばたで、イエスにあわれみを{求|もと}めて{叫|さけ}び{続|つづ}けた{盲人|もうじん}は?", "answer": "バルティマイ", "wrong": ["ザアカイ", "ラザロ", "ニコデモ"], "cat": "新約", "theme": "人物", "level": 3, "ref": "マルコの{福音書|ふくいんしょ} 10{章|しょう}", "note": "イエスに{目|め}を{開|あ}けてもらい、{従|したが}って{行|い}きました。", "order": 106}, {"id": "r13", "q": "{兄弟|きょうだい}を{何回|なんかい}まで{赦|ゆる}せばよいかとイエスに{尋|たず}ね、{限|かぎ}りなく{赦|ゆる}すよう{教|おし}えられた{弟子|でし}は?", "answer": "ペテロ", "wrong": ["ヨハネ", "ヤコブ", "トマス"], "cat": "新約", "theme": "人物", "level": 3, "ref": "マタイの{福音書|ふくいんしょ} 18{章|しょう}", "note": "{続|つづ}けて「{仲間|なかま}を{赦|ゆる}さない{家来|けらい}」のたとえが{語|かた}られます。", "order": 107}, {"id": "k29", "q": "かみさまが さいしょに つくった ものは?", "answer": "{光|ひかり}", "wrong": ["{海|うみ}", "{木|き}", "{動物|どうぶつ}"], "cat": "旧約", "theme": "できごと", "level": 1, "ref": "{創世記|そうせいき} 1{章|しょう}", "note": "{神|かみ}さまのことばで{光|ひかり}ができ、{光|ひかり}と{闇|やみ}が{分|わ}けられました。", "order": 108, "book": "創世記"}, {"id": "k30", "q": "エバは だれの あばら{骨|ぼね}から つくられた?", "answer": "アダム", "wrong": ["ノア", "アベル", "カイン"], "cat": "旧約", "theme": "人物", "level": 1, "ref": "{創世記|そうせいき} 2{章|しょう}", "note": "{神|かみ}さまはアダムを{深|ふか}く{眠|ねむ}らせ、あばら{骨|ぼね}からエバを{造|つく}りました。", "order": 109, "book": "創世記"}, {"id": "k31", "q": "はこぶねから はなした ハトが くわえて もどってきた はっぱは?", "answer": "オリーブの{葉|は}", "wrong": ["いちじくの{葉|は}", "ぶどうの{葉|は}", "なつめやしの{葉|は}"], "cat": "旧約", "theme": "できごと", "level": 1, "ref": "{創世記|そうせいき} 8{章|しょう}", "note": "{地|ち}の{水|みず}が{引|ひ}いてきたことが、これでわかりました。", "order": 110, "book": "創世記"}, {"id": "k32", "q": "モーセの お{兄|にい}さんは だれ?", "answer": "アロン", "wrong": ["ヨシュア", "カレブ", "ヨセフ"], "cat": "旧約", "theme": "人物", "level": 1, "ref": "{出|しゅつ}エジプト{記|き} 4{章|しょう}", "note": "{話|はな}すのが{苦手|にがて}なモーセを{助|たす}けるため、アロンがいっしょに{遣|つか}わされました。", "order": 111, "book": "出エジプト記"}, {"id": "k33", "q": "あれので、ひるのあいだ {人|ひと}びとを みちびいた しるしは?", "answer": "{雲|くも}の{柱|はしら}", "wrong": ["{火|ひ}の{鳥|とり}", "{大|おお}きな{星|ほし}", "{虹|にじ}"], "cat": "旧約", "theme": "できごと", "level": 1, "ref": "{出|しゅつ}エジプト{記|き} 13{章|しょう}", "note": "{昼|ひる}は{雲|くも}の{柱|はしら}、{夜|よる}は{火|ひ}の{柱|はしら}が{民|たみ}の{前|まえ}を{進|すす}みました。", "order": 112, "book": "出エジプト記"}, {"id": "k34", "q": "ヨナが かみさまに「いきなさい」と いわれた {町|まち}は?", "answer": "ニネベ", "wrong": ["エルサレム", "バビロン", "ベツレヘム"], "cat": "旧約", "theme": "人物", "level": 1, "ref": "ヨナ{書|しょ} 1{章|しょう}", "note": "ヨナは{反対|はんたい}{方向|ほうこう}の{船|ふね}に{乗|の}って{逃|に}げようとしました。", "order": 113, "book": "ヨナ書"}, {"id": "k35", "q": "{十戒|じっかい}(じっかい)が {書|か}かれたのは なに?", "answer": "{石|いし}の{板|いた}", "wrong": ["{紙|かみ}", "{木|き}の{板|いた}", "{羊|ひつじ}の{皮|かわ}"], "cat": "旧約", "theme": "できごと", "level": 1, "ref": "{出|しゅつ}エジプト{記|き} 31{章|しょう}", "note": "{神|かみ}さまご{自身|じしん}が{書|か}かれた{二|に}{枚|まい}の{石|いし}の{板|いた}が、モーセに{渡|わた}されました。", "order": 114, "book": "出エジプト記"}, {"id": "k36", "q": "イエスさまが うまれたことを、さいしょに {御使|みつか}いから しらされた {人|ひと}たちは?", "answer": "{羊飼|ひつじか}いたち", "wrong": ["{漁師|りょうし}たち", "{兵士|へいし}たち", "{祭司|さいし}たち"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "ルカの{福音書|ふくいんしょ} 2{章|しょう}", "note": "{夜|よる}、{野原|のはら}で{羊|ひつじ}の{番|ばん}をしていた{羊飼|ひつじか}いたちのところに{御使|みつか}いが{現|あらわ}れました。", "order": 115}, {"id": "k37", "q": "イエスさまを そだてた ヨセフの しごとは?", "answer": "{大工|だいく}", "wrong": ["{漁師|りょうし}", "{羊飼|ひつじか}い", "{兵士|へいし}"], "cat": "新約", "theme": "人物", "level": 1, "ref": "マタイの{福音書|ふくいんしょ} 13{章|しょう}", "note": "{人々|ひとびと}はイエスさまのことを「{大工|だいく}の{息子|むすこ}ではないか」と{言|い}いました。", "order": 116}, {"id": "k38", "q": "12さいの イエスさまが、まいごに なって いた ところは?", "answer": "{宮|みや}({神殿|しんでん})", "wrong": ["{市場|いちば}", "{山|やま}の{上|うえ}", "{湖|みずうみ}のそば"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "ルカの{福音書|ふくいんしょ} 2{章|しょう}", "note": "{宮|みや}で{教師|きょうし}たちの{話|はなし}を{聞|き}いたり{質問|しつもん}したりしていました。", "order": 117}, {"id": "k39", "q": "イエスさまの ことばどおり ペテロが あみを おろすと、どうなった?", "answer": "{魚|さかな}が たくさん とれた", "wrong": ["1ぴきも とれなかった", "くじらが とれた", "ふねが しずんだ"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "ルカの{福音書|ふくいんしょ} 5{章|しょう}", "note": "{網|あみ}が{破|やぶ}れそうになるほどの{魚|さかな}がとれました。", "order": 118}, {"id": "k40", "q": "さいごの ゆうしょくの とき、イエスさまが {弟子|でし}たちに したことは?", "answer": "{足|あし}を {洗|あら}った", "wrong": ["{歌|うた}を {教|おし}えた", "かみを {切|き}った", "{名前|なまえ}を かえた"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "ヨハネの{福音書|ふくいんしょ} 13{章|しょう}", "note": "{互|たが}いに{仕|つか}え{合|あ}うことの{手|て}{本|ほん}を{示|しめ}されました。", "order": 119}, {"id": "k41", "q": "イエスさまの たとえで、ともした あかりは どこに おく?", "answer": "{燭台|しょくだい}の{上|うえ}", "wrong": ["{升|ます}の{下|した}", "{寝台|しんだい}の{下|した}", "はこの{中|なか}"], "cat": "新約", "theme": "たとえ話", "level": 1, "ref": "マタイの{福音書|ふくいんしょ} 5{章|しょう}", "note": "あなたがたの{光|ひかり}を{人々|ひとびと}の{前|まえ}で{輝|かがや}かせなさい、と{教|おし}えられました。", "order": 120}, {"id": "k42", "q": "イエスさまが {弟子|でし}たちに おしえた おいのりの なまえは?", "answer": "{主|しゅ}の{祈|いの}り", "wrong": ["{朝|あさ}の{祈|いの}り", "{弟子|でし}の{祈|いの}り", "{王|おう}の{祈|いの}り"], "cat": "新約", "theme": "基本", "level": 1, "ref": "マタイの{福音書|ふくいんしょ} 6{章|しょう}", "note": "「{天|てん}にいます{私|わたし}たちの{父|ちち}よ」で{始|はじ}まる{祈|いの}りです。", "order": 121}, {"id": "k43", "q": "イエスさまが バプテスマを うけたとき、ハトのように おりてきたのは?", "answer": "{神|かみ}の{御霊|みたま}", "wrong": ["{御使|みつか}い", "{雨|あめ}", "{光|ひかり}の{玉|たま}"], "cat": "新約", "theme": "できごと", "level": 1, "ref": "マタイの{福音書|ふくいんしょ} 3{章|しょう}", "note": "{天|てん}から「これはわたしの{愛|あい}する{子|こ}」という{声|こえ}も{聞|き}こえました。", "order": 122}, {"id": "m01", "q": "ノアの3{人|にん}の{息子|むすこ}に{含|ふく}まれないのは?", "answer": "アベル", "wrong": ["セム", "ハム", "ヤフェテ"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{創世記|そうせいき} 6{章|しょう}", "note": "ノアの{息子|むすこ}はセム、ハム、ヤフェテの3{人|にん}です。", "order": 123, "book": "創世記"}, {"id": "m02", "q": "アブラハムの{甥|おい}で、ソドムの{近|ちか}くに{住|す}んだのは?", "answer": "ロト", "wrong": ["ラバン", "ナホル", "テラフ"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{創世記|そうせいき} 13{章|しょう}", "note": "アブラハムと{別|わか}れるとき、ロトはよく{潤|うるお}ったヨルダンの{低地|ていち}を{選|えら}びました。", "order": 124, "book": "創世記"}, {"id": "m03", "q": "ソドムから{逃|に}げる{途中|とちゅう}で{振|ふ}り{返|かえ}り、{塩|しお}の{柱|はしら}になってしまったのは?", "answer": "ロトの{妻|つま}", "wrong": ["サラ", "ハガル", "リベカ"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{創世記|そうせいき} 19{章|しょう}", "note": "{振|ふ}り{返|かえ}ってはならないと{言|い}われていました。", "order": 125, "book": "創世記"}, {"id": "m04", "q": "ヤコブが{夢|ゆめ}で{見|み}た、{地|ち}から{天|てん}に{届|とど}いていたものは?", "answer": "はしご", "wrong": ["{塔|とう}", "{虹|にじ}", "{山|やま}"], "cat": "旧約", "theme": "できごと", "level": 2, "ref": "{創世記|そうせいき} 28{章|しょう}", "note": "{神|かみ}の{使|つか}いたちが、そのはしごを{上|のぼ}り{下|お}りしていました。", "order": 126, "book": "創世記"}, {"id": "m05", "q": "{海|うみ}を{渡|わた}ったあと、タンバリンを{手|て}に{取|と}って{歌|うた}ったモーセの{姉|あね}は?", "answer": "ミリアム", "wrong": ["ツィポラ", "デボラ", "ハンナ"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{出|しゅつ}エジプト{記|き} 15{章|しょう}", "note": "{女|おんな}たちも{皆|みな}、タンバリンを{持|も}って{踊|おど}りながら{彼女|かのじょ}に{続|つづ}きました。", "order": 127, "book": "出エジプト記"}, {"id": "m06", "q": "モーセの{後|あと}を{継|つ}ぎ、{民|たみ}を{約束|やくそく}の{地|ち}へ{導|みちび}いたのは?", "answer": "ヨシュア", "wrong": ["カレブ", "アロン", "ギデオン"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "ヨシュア{記|き} 1{章|しょう}", "note": "{主|しゅ}は「{強|つよ}くあれ。{雄々|おお}しくあれ」とヨシュアを{励|はげ}まされました。", "order": 128, "book": "ヨシュア記"}, {"id": "m07", "q": "エリコで、イスラエルの{二人|ふたり}の{偵察者|ていさつしゃ}をかくまった{女性|じょせい}は?", "answer": "ラハブ", "wrong": ["ルツ", "デボラ", "ナオミ"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "ヨシュア{記|き} 2{章|しょう}", "note": "{窓|まど}に{赤|あか}いひもを{結|むす}び、{町|まち}が{攻|せ}められたときに{家族|かぞく}ともども{救|すく}われました。", "order": 129, "book": "ヨシュア記"}, {"id": "m08", "q": "{子|こ}が{与|あた}えられるよう{祈|いの}り、サムエルを{産|う}んだ{母|はは}は?", "answer": "ハンナ", "wrong": ["サラ", "ルツ", "ミリアム"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "サムエル{記|き}{第|だい}{一|いち} 1{章|しょう}", "note": "ハンナは、{生|う}まれた{子|こ}を{主|しゅ}にささげると{誓|ちか}っていました。", "order": 130, "book": "サムエル記第一"}, {"id": "m09", "q": "ケリテ{川|がわ}のほとりで、エリヤにパンと{肉|にく}を{運|はこ}んだ{鳥|とり}は?", "answer": "{烏|からす}(カラス)", "wrong": ["{鳩|はと}", "{鷲|わし}", "うずら"], "cat": "旧約", "theme": "できごと", "level": 2, "ref": "{列王記|れつおうき}{第|だい}{一|いち} 17{章|しょう}", "note": "{烏|からす}が{朝|あさ}と{夕|ゆう}にパンと{肉|にく}を{運|はこ}び、エリヤは{川|かわ}の{水|みず}を{飲|の}みました。", "order": 131, "book": "列王記第一"}, {"id": "m10", "q": "ソロモン{王|おう}の{知恵|ちえ}を{試|ため}そうと、{難問|なんもん}を{携|たずさ}えて{訪|たず}ねてきたのは?", "answer": "シェバの{女王|じょおう}", "wrong": ["エジプトの{女王|じょおう}", "ペルシアの{女王|じょおう}", "ローマの{女王|じょおう}"], "cat": "旧約", "theme": "人物", "level": 2, "ref": "{列王記|れつおうき}{第|だい}{一|いち} 10{章|しょう}", "note": "{女王|じょおう}はソロモンの{知恵|ちえ}と{繁栄|はんえい}に{驚|おどろ}き、{主|しゅ}をほめたたえました。", "order": 132, "book": "列王記第一"}, {"id": "m11", "q": "{詩篇|しへん}23{篇|へん}で、{主|しゅ}は{何|なに}にたとえられている?", "answer": "{羊飼|ひつじか}い", "wrong": ["{王|おう}", "{岩|いわ}", "{光|ひかり}"], "cat": "旧約", "theme": "基本", "level": 2, "ref": "{詩篇|しへん} 23{篇|へん}", "note": "{主|しゅ}が{羊飼|ひつじか}いとして、{緑|みどり}の{牧場|まきば}や{憩|いこ}いの{水|みず}のほとりへ{導|みちび}いてくださると{歌|うた}われます。", "order": 133, "book": "詩篇"}, {"id": "m12", "q": "{箴言|しんげん}の{多|おお}くを{記|しる}したとされる{王|おう}は?", "answer": "ソロモン", "wrong": ["ダビデ", "サウル", "ヒゼキヤ"], "cat": "旧約", "theme": "基本", "level": 2, "ref": "{箴言|しんげん} 1{章|しょう}", "note": "「{主|しゅ}を{恐|おそ}れることは{知識|ちしき}の{初|はじ}め」という{教|おし}えで{知|し}られます。", "order": 134, "book": "箴言"}, {"id": "m13", "q": "{日本語|にほんご}の{聖書|せいしょ}で、{旧約|きゅうやく}{聖書|せいしょ}の{最後|さいご}に{置|お}かれている{書|しょ}は?", "answer": "マラキ{書|しょ}", "wrong": ["ゼカリヤ{書|しょ}", "ハガイ{書|しょ}", "ネヘミヤ{記|き}"], "cat": "旧約", "theme": "基本", "level": 2, "ref": "マラキ{書|しょ}", "note": "マラキ{書|しょ}のあと、{新約|しんやく}{聖書|せいしょ}のマタイの{福音書|ふくいんしょ}へと{続|つづ}きます。", "order": 135, "book": "マラキ書"}, {"id": "m14", "q": "イエスが{生|う}まれたときにユダヤを{治|おさ}めていた{王|おう}は?", "answer": "ヘロデ", "wrong": ["ピラト", "カエサル", "ダビデ"], "cat": "新約", "theme": "人物", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 2{章|しょう}", "note": "{新|あたら}しい{王|おう}の{誕生|たんじょう}を{恐|おそ}れ、ベツレヘムの{幼子|おさなご}たちを{殺|ころ}させました。", "order": 136}, {"id": "m15", "q": "イエスを{十字|じゅうじ}{架|か}につけるため{引|ひ}き{渡|わた}した、ローマの{総督|そうとく}は?", "answer": "ピラト", "wrong": ["ヘロデ", "カヤパ", "フェストゥス"], "cat": "新約", "theme": "人物", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 27{章|しょう}", "note": "{群衆|ぐんしゅう}の{前|まえ}で{手|て}を{洗|あら}い、{自分|じぶん}には{責任|せきにん}がないと{言|い}いました。", "order": 137}, {"id": "m16", "q": "イエスの{十字|じゅうじ}{架|か}を{代|か}わりに{背負|せお}わされたのは?", "answer": "クレネ{人|じん}シモン", "wrong": ["ペテロ", "アリマタヤのヨセフ", "ニコデモ"], "cat": "新約", "theme": "人物", "level": 2, "ref": "マルコの{福音書|ふくいんしょ} 15{章|しょう}", "note": "{田舎|いなか}から{来|き}て{通|とお}りかかったところを、{兵士|へいし}たちに{強|し}いられました。", "order": 138}, {"id": "m17", "q": "{復活|ふっかつ}したイエスに{最初|さいしょ}に{会|あ}ったと{記|しる}されている{女性|じょせい}は?", "answer": "マグダラのマリア", "wrong": ["イエスの{母|はは}マリア", "マルタ", "サロメ"], "cat": "新約", "theme": "人物", "level": 2, "ref": "マルコの{福音書|ふくいんしょ} 16{章|しょう}、ヨハネの{福音書|ふくいんしょ} 20{章|しょう}", "note": "{墓|はか}の{外|そと}で{泣|な}いていたとき、{名前|なまえ}を{呼|よ}ばれてイエスだとわかりました。", "order": 139}, {"id": "m18", "q": "{山|やま}の{上|うえ}でイエスの{姿|すがた}が{変|か}わったとき、{一緒|いっしょ}に{現|あらわ}れた{二人|ふたり}は?", "answer": "モーセとエリヤ", "wrong": ["アブラハムとイサク", "ダビデとソロモン", "イザヤとエレミヤ"], "cat": "新約", "theme": "できごと", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 17{章|しょう}", "note": "ペテロ、ヤコブ、ヨハネの3{人|にん}の{弟子|でし}がこれを{見|み}ました。", "order": 140}, {"id": "m19", "q": "エマオに{向|む}かう{二人|ふたり}の{弟子|でし}が、イエスだと{気|き}づいたのはいつ?", "answer": "パンを{裂|さ}いたとき", "wrong": ["{手|て}の{傷|きず}を{見|み}たとき", "{名前|なまえ}を{呼|よ}ばれたとき", "{一緒|いっしょ}に{歌|うた}ったとき"], "cat": "新約", "theme": "できごと", "level": 2, "ref": "ルカの{福音書|ふくいんしょ} 24{章|しょう}", "note": "{道|みち}{中|なか}で{聖書|せいしょ}の{説明|せつめい}を{聞|き}いたとき、{二人|ふたり}は{心|こころ}が{燃|も}えていたと{語|かた}り{合|あ}いました。", "order": 141}, {"id": "m20", "q": "{宮|みや}の「{美|うつく}しの{門|もん}」で、{生|う}まれつき{足|あし}の{不|ふ}{自由|じゆう}な{人|ひと}を{立|た}ち{上|あ}がらせた{使徒|しと}は?", "answer": "ペテロ", "wrong": ["パウロ", "バルナバ", "ステパノ"], "cat": "新約", "theme": "人物", "level": 2, "ref": "{使徒|しと}の{働|はたら}き 3{章|しょう}", "note": "ペテロはヨハネと{一緒|いっしょ}に{宮|みや}へ{祈|いの}りに{行|い}くところでした。", "order": 142}, {"id": "m21", "q": "エチオピアの{宦官|かんがん}に{聖書|せいしょ}を{説|と}き{明|あ}かし、バプテスマを{授|さず}けたのは?", "answer": "ピリポ", "wrong": ["ペテロ", "パウロ", "ステパノ"], "cat": "新約", "theme": "人物", "level": 2, "ref": "{使徒|しと}の{働|はたら}き 8{章|しょう}", "note": "{宦官|かんがん}は{馬車|ばしゃ}の{中|なか}でイザヤ{書|しょ}を{読|よ}んでいました。", "order": 143}, {"id": "m22", "q": "{天|てん}の{御国|みくに}が「パン{種|たね}」にたとえられたとき、パン{種|たね}はどうなると{語|かた}られた?", "answer": "{粉|こな}{全体|ぜんたい}をふくらませる", "wrong": ["{焼|や}かれて{消|き}える", "{鳥|とり}に{食|た}べられる", "{地|ち}に{埋|う}められる"], "cat": "新約", "theme": "たとえ話", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 13{章|しょう}", "note": "{小|ちい}さなものが{全体|ぜんたい}に{広|ひろ}がっていく、{御国|みくに}の{力|ちから}を{表|あらわ}しています。", "order": 144}, {"id": "m23", "q": "「{毒麦|どくむぎ}」のたとえで、{良|よ}い{麦|むぎ}の{中|なか}に{毒麦|どくむぎ}を{蒔|ま}いたのは?", "answer": "{敵|てき}", "wrong": ["{主人|しゅじん}のしもべ", "{鳥|とり}", "{風|かぜ}"], "cat": "新約", "theme": "たとえ話", "level": 2, "ref": "マタイの{福音書|ふくいんしょ} 13{章|しょう}", "note": "{主人|しゅじん}は、{刈|か}り{入|い}れの{時|とき}まで{両方|りょうほう}とも{育|そだ}つままにしておくよう{命|めい}じました。", "order": 145}, {"id": "m24", "q": "「{盛大|せいだい}な{宴会|えんかい}」のたとえで、{招|まね}いた{人|ひと}たちが{来|こ}なかったとき、{主人|しゅじん}は{誰|だれ}を{招|まね}いた?", "answer": "{通|とお}りや{路地|ろじ}にいる{貧|まず}しい{人|ひと}たち", "wrong": ["{王|おう}の{家来|けらい}たち", "{祭司|さいし}たち", "{誰|だれ}も{招|まね}かなかった"], "cat": "新約", "theme": "たとえ話", "level": 2, "ref": "ルカの{福音書|ふくいんしょ} 14{章|しょう}", "note": "それでも{席|せき}が{空|あ}いていたので、{街道|かいどう}や{垣根|かきね}のところへも{招|まね}きに{行|い}かせました。", "order": 146}, {"id": "s01", "q": "アブラハムが{一族|いちぞく}と{共|とも}に{最初|さいしょ}に{旅立|たびだ}った{町|まち}は?", "answer": "カルデア{人|じん}のウル", "wrong": ["バビロン", "ニネベ", "ダマスコ"], "cat": "旧約", "theme": "できごと", "level": 3, "ref": "{創世記|そうせいき} 11{章|しょう}", "note": "{父|ちち}テラフに{連|つ}れられてウルを{出|で}て、ハランに{住|す}みました。", "order": 147, "book": "創世記"}, {"id": "s02", "q": "ヤコブが{最も|もっと}{愛|あい}した{妻|つま}で、ヨセフとベニヤミンの{母|はは}は?", "answer": "ラケル", "wrong": ["レア", "ジルパ", "ビルハ"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "{創世記|そうせいき} 29〜30{章|しょう}", "note": "ヤコブはラケルのために、おじラバンのもとで14{年間|ねんかん}{働|はたら}きました。", "order": 148, "book": "創世記"}, {"id": "s03", "q": "モーセのしゅうとで、{民|たみ}を{治|おさ}める{知恵|ちえ}を{助言|じょげん}したミディアンの{祭司|さいし}は?", "answer": "イテロ", "wrong": ["ラバン", "ロト", "アロン"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "{出|しゅつ}エジプト{記|き} 18{章|しょう}", "note": "モーセ{一人|ひとり}で{民|たみ}を{裁|さば}くのは{重|おも}すぎると、{働|はたら}きを{分|わ}けるよう{勧|すす}めました。", "order": 149, "book": "出エジプト記"}, {"id": "s04", "q": "アハブ{王|おう}の{妻|つま}で、{預言者|よげんしゃ}エリヤの{命|いのち}を{狙|ねら}った{王妃|おうひ}は?", "answer": "イゼベル", "wrong": ["エステル", "デリラ", "ミカル"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "{列王記|れつおうき}{第|だい}{一|いち} 19{章|しょう}", "note": "エリヤは{恐|おそ}れて{荒野|こうや}へ{逃|に}げ、えにしだの{木|き}の{下|した}で{休|やす}みました。", "order": 150, "book": "列王記第一"}, {"id": "s05", "q": "イザヤが{見|み}た{幻|まぼろし}で、{主|しゅ}の{前|まえ}で「{聖|せい}なる、{聖|せい}なる、{聖|せい}なる」と{呼|よ}び{交|か}わしていたのは?", "answer": "セラフィム", "wrong": ["ケルビム", "{天|てん}の{軍勢|ぐんぜい}", "{長老|ちょうろう}たち"], "cat": "旧約", "theme": "できごと", "level": 3, "ref": "イザヤ{書|しょ} 6{章|しょう}", "note": "セラフィムにはそれぞれ{六|むっ}つの{翼|つばさ}がありました。", "order": 151, "book": "イザヤ書"}, {"id": "s06", "q": "{干|ひ}からびた{骨|ほね}が{生|い}き{返|かえ}る{幻|まぼろし}を{見|み}た{預言者|よげんしゃ}は?", "answer": "エゼキエル", "wrong": ["エレミヤ", "ダニエル", "ホセア"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "エゼキエル{書|しょ} 37{章|しょう}", "note": "{骨|ほね}が{組|く}み{合|あ}わさり、{息|いき}が{吹|ふ}き{込|こ}まれて{大集団|だいしゅうだん}となりました。", "order": 152, "book": "エゼキエル書"}, {"id": "s07", "q": "ヨシヤ{王|おう}の{時代|じだい}に、{宮|みや}の{中|なか}で{見|み}つかったものは?", "answer": "{律法|りっぽう}の{書|しょ}", "wrong": ["{契約|けいやく}の{箱|はこ}", "{金|きん}の{燭台|しょくだい}", "ゴリヤテの{剣|つるぎ}"], "cat": "旧約", "theme": "できごと", "level": 3, "ref": "{列王記|れつおうき}{第|だい}{二|に} 22{章|しょう}", "note": "{書|しょ}のことばを{聞|き}いたヨシヤ{王|おう}は、{衣|ころも}を{裂|さ}いて{悔|く}い{改|あらた}めました。", "order": 153, "book": "列王記第二"}, {"id": "s08", "q": "エステルを{王妃|おうひ}として{迎|むか}えたペルシアの{王|おう}は?", "answer": "クセルクセス", "wrong": ["キュロス", "ダレイオス", "ネブカドネツァル"], "cat": "旧約", "theme": "人物", "level": 3, "ref": "エステル{記|き} 2{章|しょう}", "note": "{新改訳|しんかいやく}2017では、{第|だい}{三|さん}{版|ばん}の「アハシュエロス」から{表記|ひょうき}が{変|か}わりました。", "order": 154, "book": "エステル記"}, {"id": "s09", "q": "{回心|かいしん}{直後|ちょくご}のパウロ(サウロ)の{上|うえ}に{手|て}を{置|お}き、{目|め}が{見|み}えるようにした{弟子|でし}は?", "answer": "アナニア", "wrong": ["ステパノ", "バルナバ", "シラス"], "cat": "新約", "theme": "人物", "level": 3, "ref": "{使徒|しと}の{働|はたら}き 9{章|しょう}", "note": "{主|しゅ}に{示|しめ}されてサウロのもとへ{行|い}き、{目|め}からうろこのような{物|もの}が{落|お}ちました。", "order": 155}, {"id": "s10", "q": "パウロの{第一回|だいいっかい}{伝道|でんどう}{旅行|りょこう}に{同行|どうこう}したのは?", "answer": "バルナバ", "wrong": ["シラス", "テモテ", "ルカ"], "cat": "新約", "theme": "人物", "level": 3, "ref": "{使徒|しと}の{働|はたら}き 13{章|しょう}", "note": "アンティオキア{教会|きょうかい}から、{聖霊|せいれい}に{導|みちび}かれて{送|おく}り{出|だ}されました。", "order": 156}, {"id": "s11", "q": "パウロとシラスが{牢|ろう}で{賛美|さんび}していると{大地震|だいじしん}が{起|お}き、{看守|かんしゅ}が{救|すく}われた{町|まち}は?", "answer": "ピリピ", "wrong": ["ローマ", "コリント", "エペソ"], "cat": "新約", "theme": "できごと", "level": 3, "ref": "{使徒|しと}の{働|はたら}き 16{章|しょう}", "note": "{看守|かんしゅ}とその{家族|かぞく}は{皆|みな}バプテスマを{受|う}けました。", "order": 157}, {"id": "s12", "q": "パウロが「{知|し}られていない{神|かみ}に」と{刻|きざ}まれた{祭壇|さいだん}を{手|て}がかりに{語|かた}った{町|まち}は?", "answer": "アテネ", "wrong": ["ローマ", "エルサレム", "アンティオキア"], "cat": "新約", "theme": "できごと", "level": 3, "ref": "{使徒|しと}の{働|はたら}き 17{章|しょう}", "note": "アレオパゴスで、{天地|てんち}を{造|つく}られた{神|かみ}について{語|かた}りました。", "order": 158}, {"id": "s13", "q": "{弟子|でし}たちが{初|はじ}めて「キリスト{者|しゃ}」と{呼|よ}ばれた{町|まち}は?", "answer": "アンティオキア", "wrong": ["エルサレム", "ローマ", "ダマスコ"], "cat": "新約", "theme": "基本", "level": 3, "ref": "{使徒|しと}の{働|はたら}き 11{章|しょう}", "note": "バルナバとサウロが、この{町|まち}で{丸一年|まるいちねん}{教|おし}えました。", "order": 159}, {"id": "s14", "q": "ヨハネの{黙示録|もくしろく}の「{七|なな}つの{教会|きょうかい}」に{含|ふく}まれないのは?", "answer": "コリント", "wrong": ["エペソ", "スミルナ", "ラオディキア"], "cat": "新約", "theme": "基本", "level": 3, "ref": "ヨハネの{黙示録|もくしろく} 2〜3{章|しょう}", "note": "{七|なな}つの{教会|きょうかい}はアジアにあり、それぞれに{主|しゅ}からのことばが{送|おく}られました。", "order": 160}, {"id": "s15", "q": "「ぶどう{園|えん}の{農夫|のうふ}」のたとえで、{農夫|のうふ}たちが{最後|さいご}に{殺|ころ}してしまったのは?", "answer": "{主人|しゅじん}の{愛|あい}する{息子|むすこ}", "wrong": ["{主人|しゅじん}{自身|じしん}", "{旅人|たびびと}", "ぶどう{園|えん}の{番人|ばんにん}"], "cat": "新約", "theme": "たとえ話", "level": 3, "ref": "マルコの{福音書|ふくいんしょ} 12{章|しょう}", "note": "しもべたちを{次々|つぎつぎ}に{追|お}い{返|かえ}したあと、{跡取|あとと}りの{息子|むすこ}まで{殺|ころ}してしまいました。", "order": 161}, {"id": "O_lv1", "q": "レビ{記|き}に{主|しゅ}に{記|しる}されている{内容|ないよう}は?", "answer": "{祭司|さいし}の{務|つと}めやささげ{物|もの}、きよさについての{定|さだ}め", "wrong": ["{王|おう}たちの{戦|たたか}いの{記録|きろく}", "{預言者|よげんしゃ}の{幻|まぼろし}", "イスラエルの{系図|けいず}"], "cat": "旧約", "theme": "基本", "level": 2, "book": "レビ記", "ref": "レビ{記|き} 1〜27{章|しょう}", "note": "アロンとその{子|こ}らが{祭司|さいし}として{仕|つか}えるための{決|き}まりが{多|おお}く{記|しる}されています。", "order": 162}, {"id": "O_lv2", "q": "レビ{記|き}19{章|しょう}に{記|しる}され、イエスも{大切|たいせつ}な{戒|いまし}めとして{挙|あ}げたのは?", "answer": "{隣人|りんじん}を{自分|じぶん}{自身|じしん}のように{愛|あい}すること", "wrong": ["{安息日|あんそくび}に{旅|たび}をしないこと", "{毎日|まいにち}{断食|だんじき}すること", "{祭司|さいし}にだけ{従|したが}うこと"], "cat": "旧約", "theme": "基本", "level": 2, "book": "レビ記", "ref": "レビ{記|き} 19{章|しょう}", "note": "イエスは、{神|かみ}を{愛|あい}することと{並|なら}んで{最も|もっと}{大切|たいせつ}な{戒|いまし}めだと{教|おし}えられました。", "order": 163}, {"id": "O_lv3", "q": "レビ{記|き}25{章|しょう}に{定|さだ}められた、50{年|ねん}ごとに{土地|とち}がもとの{持|も}ち{主|しゅ}に{返|かえ}される{年|とし}は?", "answer": "ヨベルの{年|とし}", "wrong": ["{安息年|あんそくねん}", "{過越|すぎこし}の{年|とし}", "{仮庵|かりいお}の{年|とし}"], "cat": "旧約", "theme": "できごと", "level": 3, "book": "レビ記", "ref": "レビ{記|き} 25{章|しょう}", "note": "この{年|とし}には、{奴隷|どれい}とされた{人々|ひとびと}も{解放|かいほう}されると{定|さだ}められました。", "order": 164}, {"id": "O_nu1", "q": "「{民数記|みんすうき}」という{書名|しょめい}の{由来|ゆらい}は?", "answer": "イスラエルの{民|たみ}の{人数|にんずう}を{数|かぞ}えたこと", "wrong": ["{民|たみ}が{数|かず}を{学|まな}んだこと", "{数|かぞ}えきれない{奇跡|きせき}", "{王|おう}の{数|かず}を{記|しる}したこと"], "cat": "旧約", "theme": "基本", "level": 2, "book": "民数記", "ref": "{民数記|みんすうき} 1{章|しょう}", "note": "{荒野|こうや}の{旅|たび}の{初|はじ}めと{終|お}わりに、{戦|たたか}いに{出|で}られる{男|おとこ}{子|こ}が{数|かぞ}えられました。", "order": 165}, {"id": "O_dt1", "q": "{申命記|しんめいき}に{主|しゅ}に{記|しる}されているのは?", "answer": "{約束|やくそく}の{地|ち}に{入|はい}る{前|まえ}に、モーセが{民|たみ}に{語|かた}った{言葉|ことば}", "wrong": ["ソロモンの{知恵|ちえ}の{言葉|ことば}", "バビロン{捕囚|ほしゅう}の{記録|きろく}", "ダビデの{詩|し}"], "cat": "旧約", "theme": "基本", "level": 2, "book": "申命記", "ref": "{申命記|しんめいき} 1{章|しょう}", "note": "エジプトを{出|で}てからの{歩|あゆ}みを{振|ふ}り{返|かえ}り、{律法|りっぽう}をもう{一|いち}{度|ど}{語|かた}り{聞|き}かせました。", "order": 166}, {"id": "O_dt2", "q": "{申命記|しんめいき}6{章|しょう}で、{心|こころ}を{尽|つ}くし、いのちを{尽|つ}くし、{力|ちから}を{尽|つ}くして{愛|あい}しなさいと{言|い}われている{相|あい}{手|て}は?", "answer": "あなたの{神|かみ}、{主|しゅ}", "wrong": ["{隣人|りんじん}", "{王|おう}", "{両親|りょうしん}"], "cat": "旧約", "theme": "基本", "level": 2, "book": "申命記", "ref": "{申命記|しんめいき} 6{章|しょう}", "note": "この{教|おし}えを{子|こ}どもたちにくり{返|かえ}し{教|おし}えなさいとも{命|めい}じられています。", "order": 167}, {"id": "O_dt3", "q": "モーセが{約束|やくそく}の{地|ち}を{見渡|みわた}し、その{地|ち}で{生涯|しょうがい}を{終|お}えた{山|やま}は?", "answer": "ネボ{山|さん}", "wrong": ["シナイ{山|さん}", "カルメル{山|さん}", "オリーブ{山|さん}"], "cat": "旧約", "theme": "できごと", "level": 3, "book": "申命記", "ref": "{申命記|しんめいき} 34{章|しょう}", "note": "モーセは{約束|やくそく}の{地|ち}に{入|はい}ることなく、120{歳|さい}で{亡|な}くなりました。", "order": 168}, {"id": "O_ru1", "q": "ルツの{出身|しゅっしん}{地|ち}は?", "answer": "モアブ", "wrong": ["エジプト", "エドム", "アンモン"], "cat": "旧約", "theme": "人物", "level": 2, "book": "ルツ記", "ref": "ルツ{記|き} 1{章|しょう}", "note": "{異国|いこく}の{女性|じょせい}だったルツが、イスラエルの{神|かみ}を{自分|じぶん}の{神|かみ}としました。", "order": 169}, {"id": "O_ru2", "q": "ルツが{落|お}ち{穂|ぼ}を{拾|ひろ}った{畑|はたけ}の{持|も}ち{主|しゅ}で、のちにルツと{結婚|けっこん}したのは?", "answer": "ボアズ", "wrong": ["オベデ", "エッサイ", "エリメレク"], "cat": "旧約", "theme": "人物", "level": 2, "book": "ルツ記", "ref": "ルツ{記|き} 2〜4{章|しょう}", "note": "ボアズとルツの{子|こ}オベデは、ダビデの{祖父|そふ}になりました。", "order": 170}, {"id": "O_2s1", "q": "ダビデが{全|ぜん}イスラエルの{王|おう}となったあと、{都|みやこ}とした{町|まち}は?", "answer": "エルサレム", "wrong": ["ヘブロン", "ベツレヘム", "サマリア"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "サムエル記第二", "ref": "サムエル{記|き}{第|だい}{二|に} 5{章|しょう}", "note": "エルサレムは「ダビデの{町|まち}」とも{呼|よ}ばれるようになりました。", "order": 171}, {"id": "O_2s2", "q": "{契約|けいやく}の{箱|はこ}をエルサレムに{運|はこ}び{上|あ}げたとき、ダビデはどうした?", "answer": "{主|しゅ}の{前|まえ}で{力|ちから}の{限|かぎ}り{踊|おど}った", "wrong": ["{悲|かな}しんで{泣|な}いた", "{断食|だんじき}を{始|はじ}めた", "だれにも{知|し}らせなかった"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "サムエル記第二", "ref": "サムエル{記|き}{第|だい}{二|に} 6{章|しょう}", "note": "{喜|よろこ}びのあまり、{全身|ぜんしん}で{主|しゅ}を{賛美|さんび}しました。", "order": 172}, {"id": "O_2k1", "q": "エリシャの{言葉|ことば}に{従|したが}ってヨルダン{川|がわ}に{七回|ななかい}{身|み}を{浸|ひた}し、{重|おも}い{皮膚病|ひふびょう}がきよめられたアラムの{将軍|しょうぐん}は?", "answer": "ナアマン", "wrong": ["ゴリヤテ", "ハザエル", "ベン・ハダド"], "cat": "旧約", "theme": "人物", "level": 2, "book": "列王記第二", "ref": "{列王記|れつおうき}{第|だい}{二|に} 5{章|しょう}", "note": "{捕|と}らわれていたイスラエルの{少女|しょうじょ}の{一言|ひとこと}がきっかけでした。", "order": 173}, {"id": "O_1c1", "q": "{歴代誌|れきだいし}{第|だい}{一|いち}は、{何|なに}から{始|はじ}まっている?", "answer": "アダムから{始|はじ}まる{長|なが}い{系図|けいず}", "wrong": ["{天地|てんち}{創造|そうぞう}の{物語|ものがたり}", "{出|しゅつ}エジプトの{物語|ものがたり}", "ダビデの{詩|し}"], "cat": "旧約", "theme": "基本", "level": 3, "book": "歴代誌第一", "ref": "{歴代誌|れきだいし}{第|だい}{一|いち} 1〜9{章|しょう}", "note": "イスラエルの{歴史|れきし}を、{系図|けいず}によって{最初|さいしょ}からたどっています。", "order": 174}, {"id": "O_1c2", "q": "{歴代誌|れきだいし}{第|だい}{一|いち}で、{中|なか}{心|こころ}となって{描|えが}かれている{王|おう}は?", "answer": "ダビデ", "wrong": ["ソロモン", "サウル", "ヒゼキヤ"], "cat": "旧約", "theme": "人物", "level": 2, "book": "歴代誌第一", "ref": "{歴代誌|れきだいし}{第|だい}{一|いち} 11〜29{章|しょう}", "note": "ダビデが{神殿|しんでん}{建設|けんせつ}の{準備|じゅんび}をした{様子|ようす}が{詳|くわ}しく{記|しる}されています。", "order": 175}, {"id": "O_1c3", "q": "{歴代誌|れきだいし}{第|だい}{一|いち}4{章|しょう}で、{自分|じぶん}の{地境|ちざかい}を{広|ひろ}げてくださいと{神|かみ}に{祈|いの}り、その{願|ねが}いがかなえられた{人物|じんぶつ}は?", "answer": "ヤベツ", "wrong": ["ヤコブ", "ヨブ", "ヨエル"], "cat": "旧約", "theme": "人物", "level": 3, "book": "歴代誌第一", "ref": "{歴代誌|れきだいし}{第|だい}{一|いち} 4{章|しょう}", "note": "{長|なが}い{系図|けいず}の{途中|とちゅう}に、{短|みじか}く{記|しる}されている{祈|いの}りです。", "order": 176}, {"id": "O_2c1", "q": "{歴代誌|れきだいし}{第|だい}{二|に}の{初|はじ}めで、{中|なか}{心|こころ}に{描|えが}かれている{王|おう}は?", "answer": "ソロモン", "wrong": ["ダビデ", "サウル", "ヨシヤ"], "cat": "旧約", "theme": "人物", "level": 2, "book": "歴代誌第二", "ref": "{歴代誌|れきだいし}{第|だい}{二|に} 1〜9{章|しょう}", "note": "ソロモンによる{神殿|しんでん}の{建設|けんせつ}と{奉献|ほうけん}が{記|しる}されています。", "order": 177}, {"id": "O_2c2", "q": "{歴代誌|れきだいし}{第|だい}{二|に}7{章|しょう}で、ソロモンが{祈|いの}り{終|お}えたとき、{天|てん}から{降|ふ}ってきたものは?", "answer": "{火|ひ}", "wrong": ["{雨|あめ}", "{雪|ゆき}", "{鳩|はと}"], "cat": "旧約", "theme": "できごと", "level": 3, "book": "歴代誌第二", "ref": "{歴代誌|れきだいし}{第|だい}{二|に} 7{章|しょう}", "note": "{火|ひ}がささげ{物|もの}を{焼|や}き{尽|つ}くし、{主|しゅ}の{栄光|えいこう}が{宮|みや}に{満|み}ちました。", "order": 178}, {"id": "O_2c3", "q": "{歴代誌|れきだいし}{第|だい}{二|に}の{最後|さいご}で、{捕囚|ほしゅう}の{民|たみ}の{帰還|きかん}と{神殿|しんでん}{再建|さいけん}を{許|ゆる}したペルシアの{王|おう}は?", "answer": "キュロス", "wrong": ["クセルクセス", "ダレイオス", "ネブカドネツァル"], "cat": "旧約", "theme": "人物", "level": 3, "book": "歴代誌第二", "ref": "{歴代誌|れきだいし}{第|だい}{二|に} 36{章|しょう}", "note": "この{王|おう}の{命令|めいれい}の{言葉|ことば}は、エズラ{記|き}の{初|はじ}めにも{記|しる}されています。", "order": 179}, {"id": "O_ez1", "q": "エズラ{記|き}の{主|しゅ}な{内容|ないよう}は?", "answer": "{捕囚|ほしゅう}から{帰|かえ}った{人々|ひとびと}による{神殿|しんでん}の{再建|さいけん}", "wrong": ["エルサレムの{城壁|じょうへき}の{再建|さいけん}", "エジプトからの{脱出|だっしゅつ}", "{王国|おうこく}の{分|ぶん}{裂|さ}"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "エズラ記", "ref": "エズラ{記|き} 1〜6{章|しょう}", "note": "{後半|こうはん}では、エズラが{民|たみ}に{律法|りっぽう}を{教|おし}えたことが{記|しる}されます。", "order": 180}, {"id": "O_ez2", "q": "エズラはどのような{人物|じんぶつ}だった?", "answer": "モーセの{律法|りっぽう}に{通|つう}じた{学者|がくしゃ}", "wrong": ["ペルシアの{王|おう}", "{大工|だいく}の{棟梁|とうりょう}", "{軍隊|ぐんたい}の{隊長|たいちょう}"], "cat": "旧約", "theme": "人物", "level": 3, "book": "エズラ記", "ref": "エズラ{記|き} 7{章|しょう}", "note": "エズラは{主|しゅ}の{律法|りっぽう}を{調|しら}べ、{実行|じっこう}し、{教|おし}えようと{心|こころ}を{定|さだ}めていました。", "order": 181}, {"id": "O_ez3", "q": "{再建|さいけん}される{神殿|しんでん}の{礎|いしずえ}が{据|す}えられたとき、{以前|いぜん}の{神殿|しんでん}を{見|み}たことのある{年寄|としよ}りたちはどうした?", "answer": "{大|おお}{声|こえ}をあげて{泣|な}いた", "wrong": ["{静|しず}かに{踊|おど}った", "その{場|ば}を{去|さ}った", "{何|なに}も{言|い}わなかった"], "cat": "旧約", "theme": "できごと", "level": 3, "book": "エズラ記", "ref": "エズラ{記|き} 3{章|しょう}", "note": "{一方|いっぽう}で{多|おお}くの{人|ひと}は{喜|よろこ}びの{声|こえ}をあげ、{泣|な}き{声|こえ}と{区別|くべつ}がつかないほどでした。", "order": 182}, {"id": "O_ne1", "q": "ネヘミヤがペルシアの{王|おう}に{仕|つか}えていたときの{役職|やくしょく}は?", "answer": "{献酌官|けんしゃくかん}", "wrong": ["{将軍|しょうぐん}", "{料理|りょうり}{長|ちょう}", "{門|もん}{番|ばん}"], "cat": "旧約", "theme": "人物", "level": 3, "book": "ネヘミヤ記", "ref": "ネヘミヤ{記|き} 1〜2{章|しょう}", "note": "{王|おう}に{酒|さけ}を{差|さ}し{出|だ}す、{信頼|しんらい}の{厚|あつ}い{役|やく}{目|め}でした。", "order": 183}, {"id": "O_ne2", "q": "{城壁|じょうへき}の{完成|かんせい}{後|ご}、{集|あつ}まった{民|たみ}の{前|まえ}で{律法|りっぽう}の{書|しょ}を{読|よ}み{上|あ}げたのは?", "answer": "エズラ", "wrong": ["ネヘミヤ", "ハガイ", "ゼルバベル"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "ネヘミヤ記", "ref": "ネヘミヤ{記|き} 8{章|しょう}", "note": "{民|たみ}は{律法|りっぽう}の{言葉|ことば}を{聞|き}いて{泣|な}きましたが、{主|しゅ}を{喜|よろこ}ぶことがあなたがたの{力|ちから}だと{励|はげ}まされました。", "order": 184}, {"id": "O_es1", "q": "{両親|りょうしん}を{亡|な}くしたエステルを{育|そだ}てた、いとこは?", "answer": "モルデカイ", "wrong": ["ハマン", "ダニエル", "ネヘミヤ"], "cat": "旧約", "theme": "人物", "level": 2, "book": "エステル記", "ref": "エステル{記|き} 2{章|しょう}", "note": "モルデカイはエステルに、{民|たみ}を{救|すく}うために{王|おう}の{前|まえ}に{出|で}るよう{励|はげ}ましました。", "order": 185}, {"id": "O_jb1", "q": "{苦|くる}しむヨブを{慰|なぐさ}めるため、{最初|さいしょ}にやって{来|き}た{友人|ゆうじん}は{何人|なんにん}?", "answer": "3{人|にん}", "wrong": ["{1人|ひとり}", "5{人|にん}", "12{人|にん}"], "cat": "旧約", "theme": "人物", "level": 2, "book": "ヨブ記", "ref": "ヨブ{記|き} 2{章|しょう}", "note": "{友人|ゆうじん}たちは{七日七夜|なのかななや}、ヨブと{一緒|いっしょ}に{地|ち}に{座|すわ}り、ひと{言|こと}も{話|はな}しませんでした。", "order": 186}, {"id": "O_jb2", "q": "ヨブ{記|き}の{最後|さいご}で、ヨブはどうなった?", "answer": "{以前|いぜん}の2{倍|ばい}の{財産|ざいさん}を{与|あた}えられた", "wrong": ["{町|まち}を{追|お}われた", "{友人|ゆうじん}と{仲|なか}たがいした", "すべてを{失|うしな}ったまま{終|お}わった"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "ヨブ記", "ref": "ヨブ{記|き} 42{章|しょう}", "note": "{主|しゅ}はヨブの{後|あと}の{半生|はんせい}を、{前|まえ}の{半生|はんせい}よりも{祝福|しゅくふく}されました。", "order": 187}, {"id": "O_ps1", "q": "{詩篇|しへん}の たくさんの {歌|うた}を {作|つく}ったとされる {王|おう}は?", "answer": "ダビデ", "wrong": ["ソロモン", "サウル", "ヨシヤ"], "cat": "旧約", "theme": "人物", "level": 1, "book": "詩篇", "ref": "{詩篇|しへん} {詩篇|しへん}", "note": "{羊飼|ひつじか}いだったダビデは、たて{琴|ごと}をひく{人|ひと}としても{知|し}られていました。", "order": 188}, {"id": "O_pr1", "q": "{箴言|しんげん}1{章|しょう}で、{知識|ちしき}の{初|はじ}めとされているのは?", "answer": "{主|しゅ}を{恐|おそ}れること", "wrong": ["{本|ほん}をたくさん{読|よ}むこと", "{年|とし}を{重|かさ}ねること", "{富|とみ}を{得|え}ること"], "cat": "旧約", "theme": "基本", "level": 2, "book": "箴言", "ref": "{箴言|しんげん} 1{章|しょう}", "note": "{箴言|しんげん}{全体|ぜんたい}に{流|なが}れる、{大切|たいせつ}な{教|おし}えです。", "order": 189}, {"id": "O_pr2", "q": "{箴言|しんげん}で、なまけものに「{見|み}て {知恵|ちえ}を {得|え}よ」と いわれている {生|い}き{物|もの}は?", "answer": "あり", "wrong": ["はち", "すずめ", "ライオン"], "cat": "旧約", "theme": "基本", "level": 1, "book": "箴言", "ref": "{箴言|しんげん} 6{章|しょう}", "note": "あれこれ{命令|めいれい}されなくても、{夏|なつ}のうちに{食|た}べ{物|もの}を{集|あつ}めると{語|かた}られます。", "order": 190}, {"id": "O_ec1", "q": "{伝道者|でんどうしゃ}の{書|しょ}でくり{返|かえ}される「{空|そら}の{空|そら}」という{言葉|ことば}が{表|あらわ}しているのは?", "answer": "{日|ひ}の{下|した}のすべてはむなしいということ", "wrong": ["{空|そら}の{美|うつく}しさ", "{天|てん}の{広|ひろ}さ", "{星|ほし}の{多|おお}さ"], "cat": "旧約", "theme": "基本", "level": 2, "book": "伝道者の書", "ref": "{伝道者|でんどうしゃ}の{書|しょ} 1{章|しょう}", "note": "{神|かみ}を{離|はな}れた{人生|じんせい}のむなしさを{見|み}つめる{書|しょ}です。", "order": 191}, {"id": "O_ec2", "q": "{伝道者|でんどうしゃ}の{書|しょ}3{章|しょう}で、{天|てん}の{下|した}では{何|なに}{事|こと}にも{何|なに}があると{言|い}われている?", "answer": "{定|さだ}まった{時|とき}", "wrong": ["{終|お}わりのない{道|みち}", "{決|き}まった{理由|りゆう}", "{例外|れいがい}"], "cat": "旧約", "theme": "基本", "level": 2, "book": "伝道者の書", "ref": "{伝道者|でんどうしゃ}の{書|しょ} 3{章|しょう}", "note": "{生|う}まれるのに{時|とき}があり、{死|し}ぬのに{時|とき}がある、と{続|つづ}きます。", "order": 192}, {"id": "O_ec3", "q": "{伝道者|でんどうしゃ}の{書|しょ}12{章|しょう}で、{若|わか}い{日|ひ}に{覚|おぼ}えておくよう{勧|すす}められているのは?", "answer": "あなたの{創造|そうぞう}{者|もの}", "wrong": ["{両親|りょうしん}の{教|おし}え", "{律法|りっぽう}の{数|かず}", "{生|う}まれた{国|くに}"], "cat": "旧約", "theme": "基本", "level": 3, "book": "伝道者の書", "ref": "{伝道者|でんどうしゃ}の{書|しょ} 12{章|しょう}", "note": "わざわいの{日|ひ}が{来|こ}ないうちに、と{勧|すす}められています。", "order": 193}, {"id": "O_so1", "q": "{雅歌|がか}は、どのような{内容|ないよう}の{書|しょ}?", "answer": "{花婿|はなむこ}と{花嫁|はなよめ}の{愛|あい}の{歌|うた}", "wrong": ["{戦|たたか}いの{記録|きろく}", "{律法|りっぽう}の{決|き}まり", "{王|おう}たちの{系図|けいず}"], "cat": "旧約", "theme": "基本", "level": 2, "book": "雅歌", "ref": "{雅歌|がか} 1〜8{章|しょう}", "note": "{神|かみ}と{民|たみ}、キリストと{教会|きょうかい}の{愛|あい}を{表|あらわ}すとも{読|よ}まれてきました。", "order": 194}, {"id": "O_so2", "q": "{雅歌|がか}は、{誰|だれ}の{歌|うた}として{始|はじ}まっている?", "answer": "ソロモン", "wrong": ["ダビデ", "モーセ", "アサフ"], "cat": "旧約", "theme": "人物", "level": 3, "book": "雅歌", "ref": "{雅歌|がか} 1{章|しょう}", "note": "{書|しょ}の{最初|さいしょ}に「ソロモンの{雅歌|がか}」と{記|しる}されています。", "order": 195}, {"id": "O_so3", "q": "{雅歌|がか}8{章|しょう}で、{大水|おおみず}も{消|け}すことができないと{言|い}われているのは?", "answer": "{愛|あい}", "wrong": ["{火|ひ}", "{光|ひかり}", "{信仰|しんこう}"], "cat": "旧約", "theme": "基本", "level": 3, "book": "雅歌", "ref": "{雅歌|がか} 8{章|しょう}", "note": "{愛|あい}は{死|し}のように{強|つよ}い、とも{歌|うた}われています。", "order": 196}, {"id": "O_is1", "q": "イザヤ{書|しょ}7{章|しょう}で、おとめが{産|う}む{男|おとこ}の{子|こ}は{何|なに}と{呼|よ}ばれると{預言|よげん}された?", "answer": "インマヌエル", "wrong": ["メシア", "ダビデ", "イスラエル"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "イザヤ書", "ref": "イザヤ{書|しょ} 7{章|しょう}", "note": "「{神|かみ}が{私|わたし}たちとともにおられる」という{意味|いみ}で、マタイの{福音書|ふくいんしょ}でも{引用|いんよう}されています。", "order": 197}, {"id": "O_is2", "q": "イザヤ{書|しょ}53{章|しょう}で{語|かた}られている「しもべ」の{姿|すがた}は?", "answer": "{私|わたし}たちの{背|そむ}きのために{刺|さ}し{通|とお}され、{苦|くる}しむしもべ", "wrong": ["{敵|てき}を{打|う}ち{倒|たお}す{勇|いさ}ましい{王|おう}", "{富|とみ}を{集|あつ}める{商人|しょうにん}", "{神殿|しんでん}を{建|た}てる{職人|しょくにん}"], "cat": "旧約", "theme": "人物", "level": 3, "book": "イザヤ書", "ref": "イザヤ{書|しょ} 53{章|しょう}", "note": "キリストの{十字|じゅうじ}{架|か}を{指|さ}し{示|しめ}す{預言|よげん}として{読|よ}まれてきました。", "order": 198}, {"id": "O_je1", "q": "{預言者|よげんしゃ}として{召|め}されたとき、エレミヤは{自分|じぶん}のことを{何|なに}と{言|い}った?", "answer": "{若|わか}くて、どう{語|かた}ればよいかわからない", "wrong": ["{年|とし}を{取|と}りすぎている", "{字|じ}が{読|よ}めない", "{病気|びょうき}で{動|うご}けない"], "cat": "旧約", "theme": "人物", "level": 2, "book": "エレミヤ書", "ref": "エレミヤ{書|しょ} 1{章|しょう}", "note": "{主|しゅ}は、{恐|おそ}れるな、わたしがあなたとともにいると{言|い}われました。", "order": 199}, {"id": "O_je2", "q": "エレミヤ{書|しょ}18{章|しょう}で、{神|かみ}とイスラエルの{関係|かんけい}は{誰|だれ}と{粘土|ねんど}にたとえられている?", "answer": "{陶器師|とうきし}", "wrong": ["{大工|だいく}", "{鍛冶屋|かじや}", "{農夫|のうふ}"], "cat": "旧約", "theme": "基本", "level": 3, "book": "エレミヤ書", "ref": "エレミヤ{書|しょ} 18{章|しょう}", "note": "{陶器師|とうきし}が{粘土|ねんど}を{思|おも}いのままに{作|つく}り{直|なお}すように、と{語|かた}られます。", "order": 200}, {"id": "O_je3", "q": "「{涙|なみだ}の{預言者|よげんしゃ}」とも{呼|よ}ばれるエレミヤが、{実際|じっさい}に{見|み}ることになった{出来事|できごと}は?", "answer": "バビロンによるエルサレムの{陥落|かんらく}", "wrong": ["エジプトからの{脱出|だっしゅつ}", "ダビデの{即位|そくい}", "{大洪水|だいこうずい}"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "エレミヤ書", "ref": "エレミヤ{書|しょ} 39{章|しょう}", "note": "エレミヤは{長|なが}く{民|たみ}に{悔|く}い{改|あらた}めを{呼|よ}びかけていました。", "order": 201}, {"id": "O_la1", "q": "{哀歌|あいか}が{嘆|なげ}き{悲|かな}しんでいるのは?", "answer": "エルサレムの{滅亡|めつぼう}", "wrong": ["ヨセフの{死|し}", "{荒野|こうや}での{放浪|ほうろう}", "ノアの{洪水|こうずい}"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "哀歌", "ref": "{哀歌|あいか} 1{章|しょう}", "note": "{滅|ほろ}びた{都|みやこ}の{悲|かな}しみが、{詩|し}の{形|かたち}で{歌|うた}われています。", "order": 202}, {"id": "O_la2", "q": "{哀歌|あいか}3{章|しょう}で、{朝|あさ}ごとに{新|あたら}しいと{言|い}われている{主|しゅ}のものは?", "answer": "あわれみ", "wrong": ["{怒|いか}り", "{律法|りっぽう}", "{戦|たたか}い"], "cat": "旧約", "theme": "基本", "level": 2, "book": "哀歌", "ref": "{哀歌|あいか} 3{章|しょう}", "note": "{深|ふか}い{嘆|なげ}きの{中|なか}に、{希望|きぼう}の{言葉|ことば}が{置|お}かれています。", "order": 203}, {"id": "O_la3", "q": "{哀歌|あいか}の{多|おお}くの{章|しょう}は、どのような{形|かたち}で{作|つく}られている?", "answer": "ヘブル{語|ご}のアルファベット{順|じゅん}の{詩|し}", "wrong": ["{手紙|てがみ}", "{物語|ものがたり}", "{系図|けいず}"], "cat": "旧約", "theme": "基本", "level": 3, "book": "哀歌", "ref": "{哀歌|あいか} 1〜4{章|しょう}", "note": "{各節|かくせつ}の{頭文字|かしらもじ}が、アルファベットの{順|じゅん}に{並|なら}ぶよう{工夫|くふう}されています。", "order": 204}, {"id": "O_ek1", "q": "エゼキエルが{預言者|よげんしゃ}として{活動|かつどう}した{場所|ばしょ}は?", "answer": "バビロン{捕囚|ほしゅう}の{地|ち}", "wrong": ["エルサレムの{神殿|しんでん}", "エジプト", "ニネベ"], "cat": "旧約", "theme": "人物", "level": 3, "book": "エゼキエル書", "ref": "エゼキエル{書|しょ} 1{章|しょう}", "note": "ケバル{川|がわ}のほとりで、{神|かみ}の{幻|まぼろし}を{見|み}ました。", "order": 205}, {"id": "O_ek2", "q": "エゼキエル{書|しょ}34{章|しょう}で、{神|かみ}はご{自身|じしん}を{何|なに}にたとえておられる?", "answer": "{自|みずか}ら{羊|ひつじ}を{探|さが}し{求|もと}める{羊飼|ひつじか}い", "wrong": ["{戦|たたか}いに{出|で}る{王|おう}", "{高|たか}い{岩|いわ}", "{堅|かた}い{盾|たて}"], "cat": "旧約", "theme": "基本", "level": 2, "book": "エゼキエル書", "ref": "エゼキエル{書|しょ} 34{章|しょう}", "note": "{散|ち}らされた{羊|ひつじ}を{捜|さが}し{出|だ}して{世話|せわ}をする、と{約束|やくそく}されています。", "order": 206}, {"id": "O_da1", "q": "ダニエルと {友|とも}だちが、{王|おう}の ごちそうの かわりに {食|た}べたものは?", "answer": "{野菜|やさい}と {水|みず}", "wrong": ["{肉|にく}と ぶどう{酒|しゅ}", "マナ", "{魚|さかな}"], "cat": "旧約", "theme": "できごと", "level": 1, "book": "ダニエル書", "ref": "ダニエル{書|しょ} 1{章|しょう}", "note": "{10日|とおか}{後|あと}、ダニエルたちは{王|おう}の{食事|しょくじ}をとった{若者|わかもの}よりも{元気|げんき}に{見|み}えました。", "order": 207}, {"id": "O_jn1", "q": "ヨナが {神|かみ}さまの ことばを つたえた あと、ニネベの {人|ひと}たちは どうした?", "answer": "{断食|だんじき}して {悔|く}い{改|あらた}めた", "wrong": ["おこって ヨナを {追|お}い{出|だ}した", "{知|し}らん{顔|かお}をした", "{戦|たたか}いを はじめた"], "cat": "旧約", "theme": "できごと", "level": 1, "book": "ヨナ書", "ref": "ヨナ{書|しょ} 3{章|しょう}", "note": "{神|かみ}さまはそれを{見|み}て、わざわいを{下|くだ}すのを{思|おも}い{直|なお}されました。", "order": 208}, {"id": "O_ml1", "q": "マラキ{書|しょ}3{章|しょう}で、{何|なに}を{宮|みや}に{携|たずさ}えて{来|き}て{主|しゅ}を{試|ため}してみよと{言|い}われている?", "answer": "{十|じゅう}{分|ぶん}の{一|いち}のささげ{物|もの}", "wrong": ["{子|こ}{羊|ひつじ}", "{金|きん}の{冠|かんむり}", "{剣|つるぎ}"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "マラキ書", "ref": "マラキ{書|しょ} 3{章|しょう}", "note": "{天|てん}の{窓|まど}を{開|ひら}いて{祝福|しゅくふく}を{注|そそ}ぐ、と{約束|やくそく}されています。", "order": 209}, {"id": "O_ml2", "q": "マラキ{書|しょ}4{章|しょう}で、{主|しゅ}の{大|おお}いなる{日|ひ}が{来|く}る{前|まえ}に{遣|つか}わされると{預言|よげん}された{預言者|よげんしゃ}は?", "answer": "エリヤ", "wrong": ["モーセ", "イザヤ", "ダニエル"], "cat": "旧約", "theme": "人物", "level": 3, "book": "マラキ書", "ref": "マラキ{書|しょ} 4{章|しょう}", "note": "{新約|しんやく}{聖書|せいしょ}では、バプテスマのヨハネがこの{預言|よげん}と{結|むす}びつけて{語|かた}られます。", "order": 210}, {"id": "O_ho1", "q": "ホセアが{神|かみ}に{命|めい}じられて{妻|つま}とした{女性|じょせい}は?", "answer": "ゴメル", "wrong": ["ルツ", "ラハブ", "ミリアム"], "cat": "旧約", "theme": "人物", "level": 3, "book": "ホセア書", "ref": "ホセア{書|しょ} 1{章|しょう}", "note": "ゴメルはやがてホセアのもとを{離|はな}れてしまいます。", "order": 211}, {"id": "O_ho2", "q": "ホセアの{結婚|けっこん}は、{何|なに}を{表|あらわ}していた?", "answer": "{背|そむ}いたイスラエルを{愛|あい}し{続|つづ}ける{神|かみ}の{愛|あい}", "wrong": ["{王|おう}{家|いえ}どうしの{同盟|どうめい}", "{祭司|さいし}の{務|つと}め", "{律法|りっぽう}の{厳|きび}しさ"], "cat": "旧約", "theme": "基本", "level": 2, "book": "ホセア書", "ref": "ホセア{書|しょ} 1〜3{章|しょう}", "note": "ホセアは{離|はな}れていった{妻|つま}を、もう{一|いち}{度|ど}{迎|むか}え{入|い}れました。", "order": 212}, {"id": "O_ho3", "q": "ホセア{書|しょ}6{章|しょう}で、{神|かみ}が{喜|よろこ}ぶのはいけにえではなく{何|なに}だと{言|い}われている?", "answer": "{真実|しんじつ}の{愛|あい}", "wrong": ["{多|おお}くの{富|とみ}", "{強|つよ}い{軍隊|ぐんたい}", "{長|なが}い{祈|いの}り"], "cat": "旧約", "theme": "基本", "level": 3, "book": "ホセア書", "ref": "ホセア{書|しょ} 6{章|しょう}", "note": "イエスもこの{言葉|ことば}を{引用|いんよう}して、パリサイ{人|びと}に{教|おし}えられました。", "order": 213}, {"id": "O_jl1", "q": "ヨエル{書|かき}で、{国|くに}を{襲|おそ}った{災害|さいがい}は?", "answer": "いなごの{大群|たいぐん}", "wrong": ["{洪水|こうずい}", "{地震|じしん}", "{日照|ひで}り"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "ヨエル書", "ref": "ヨエル{書|しょ} 1{章|しょう}", "note": "いなごが{作物|さくもつ}を{食|く}い{尽|つ}くし、ヨエルは{民|たみ}に{悔|く}い{改|あらた}めを{呼|よ}びかけました。", "order": 214}, {"id": "O_jl2", "q": "ヨエル{書|しょ}2{章|しょう}で、{神|かみ}がすべての{人|ひと}に{注|そそ}ぐと{約束|やくそく}されたものは?", "answer": "わたしの{霊|れい}", "wrong": ["{雨|あめ}", "{富|とみ}", "{火|ひ}"], "cat": "旧約", "theme": "基本", "level": 2, "book": "ヨエル書", "ref": "ヨエル{書|しょ} 2{章|しょう}", "note": "{息子|むすこ}や{娘|むすめ}は{預言|よげん}し、{老人|ろうじん}は{夢|ゆめ}を{見|み}、{若者|わかもの}は{幻|まぼろし}を{見|み}ると{語|かた}られます。", "order": 215}, {"id": "O_jl3", "q": "ヨエル{書|しょ}2{章|しょう}のこの{約束|やくそく}を、{五旬節|ごじゅんせつ}の{日|ひ}に{引用|いんよう}して{説教|せっきょう}した{使徒|しと}は?", "answer": "ペテロ", "wrong": ["パウロ", "ステパノ", "ヤコブ"], "cat": "旧約", "theme": "人物", "level": 3, "book": "ヨエル書", "ref": "ヨエル{書|しょ} 2{章|しょう}", "note": "{使徒|しと}の{働|はたら}き2{章|しょう}で、{聖霊|せいれい}が{降|ふ}ったことの{説明|せつめい}として{語|かた}られました。", "order": 216}, {"id": "O_am1", "q": "アモスのもとの{仕事|しごと}は?", "answer": "{羊飼|ひつじか}い", "wrong": ["{祭司|さいし}", "{王|おう}{子|こ}", "{大工|だいく}"], "cat": "旧約", "theme": "人物", "level": 2, "book": "アモス書", "ref": "アモス{書|しょ} 1{章|しょう}", "note": "アモスは{自分|じぶん}を、{預言者|よげんしゃ}の{弟子|でし}ではなく、{家畜|かちく}を{飼い|か}、いちじく{桑|くわ}の{木|き}を{育|そだ}てる{者|もの}だと{語|かた}っています。", "order": 217}, {"id": "O_am2", "q": "アモス{書|しょ}5{章|しょう}で、{水|みず}のように{流|なが}れさせよと{言|い}われているのは?", "answer": "{公正|こうせい}", "wrong": ["{富|とみ}", "{歌|うた}", "{涙|なみだ}"], "cat": "旧約", "theme": "基本", "level": 2, "book": "アモス書", "ref": "アモス{書|しょ} 5{章|しょう}", "note": "{正義|せいぎ}を、{絶|た}えず{流|なが}れる{川|かわ}のように、と{続|つづ}きます。", "order": 218}, {"id": "O_am3", "q": "アモスが{主|しゅ}に{預言|よげん}を{語|かた}った{相|あい}{手|て}は?", "answer": "{北|きた}イスラエル{王国|おうこく}", "wrong": ["エジプト", "バビロン", "ローマ"], "cat": "旧約", "theme": "基本", "level": 3, "book": "アモス書", "ref": "アモス{書|しょ} 7{章|しょう}", "note": "{南|みなみ}ユダの{出身|しゅっしん}でしたが、{北|きた}の{国|くに}に{遣|つか}わされました。", "order": 219}, {"id": "O_ob1", "q": "{旧約|きゅうやく}{聖書|せいしょ}で{最も|もっと}{短|みじか}い{書|しょ}、オバデヤ{書|かき}は{全部|ぜんぶ}で{何|なに}{章|しょう}?", "answer": "1{章|しょう}", "wrong": ["3{章|しょう}", "5{章|しょう}", "10{章|しょう}"], "cat": "旧約", "theme": "基本", "level": 2, "book": "オバデヤ書", "ref": "オバデヤ{書|しょ} 1{章|しょう}", "note": "わずか21{節|せつ}の{短|みじか}い{預言|よげん}{書|しょ}です。", "order": 220}, {"id": "O_ob2", "q": "オバデヤ{書|かき}が{神|かみ}のさばきを{預言|よげん}した{国|くに}は?", "answer": "エドム", "wrong": ["モアブ", "アッシリア", "エジプト"], "cat": "旧約", "theme": "基本", "level": 3, "book": "オバデヤ書", "ref": "オバデヤ{書|しょ} 1{章|しょう}", "note": "{兄弟|きょうだい}であるヤコブの{子|こ}{孫|まご}が{苦|くる}しんだとき、{喜|よろこ}んで{見|み}ていたことが{責|せ}められています。", "order": 221}, {"id": "O_ob3", "q": "エドムの{人々|ひとびと}は、{誰|だれ}の{子|こ}{孫|まご}?", "answer": "エサウ", "wrong": ["ヤコブ", "ロト", "イシュマエル"], "cat": "旧約", "theme": "人物", "level": 3, "book": "オバデヤ書", "ref": "オバデヤ{書|しょ} 1{章|しょう}", "note": "エサウはヤコブの{兄|あに}で、エドムとも{呼|よ}ばれました。", "order": 222}, {"id": "O_mi1", "q": "ミカ{書|しょ}5{章|しょう}で、イスラエルを{治|おさ}める{者|もの}が{出|で}ると{預言|よげん}された{町|まち}は?", "answer": "ベツレヘム", "wrong": ["ナザレ", "エルサレム", "エリコ"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "ミカ書", "ref": "ミカ{書|しょ} 5{章|しょう}", "note": "マタイの{福音書|ふくいんしょ}では、イエスの{誕生|たんじょう}を{伝|つた}える{場面|ばめん}でこの{預言|よげん}が{引用|いんよう}されています。", "order": 223}, {"id": "O_mi2", "q": "ミカ{書|しょ}6{章|しょう}で、{主|しゅ}があなたに{求|もと}めておられることとして{挙|あ}げられていないのは?", "answer": "たくさんのいけにえ", "wrong": ["{公正|こうせい}を{行|おこな}うこと", "{誠実|せいじつ}を{愛|あい}すること", "へりくだって{神|かみ}とともに{歩|あゆ}むこと"], "cat": "旧約", "theme": "基本", "level": 2, "book": "ミカ書", "ref": "ミカ{書|しょ} 6{章|しょう}", "note": "{何|なに}{千|せん}の{雄羊|おひつじ}よりも、この{三|みっ}つを{主|しゅ}は{求|もと}めておられると{語|かた}られます。", "order": 224}, {"id": "O_mi3", "q": "ミカ{書|しょ}4{章|しょう}で、{終|お}わりの{日|ひ}に{人々|ひとびと}は{剣|つるぎ}を{何|なに}に{打|う}ち{直|なお}すと{預言|よげん}されている?", "answer": "{鋤|すき}", "wrong": ["{盾|たて}", "{冠|かんむり}", "{鎖|くさり}"], "cat": "旧約", "theme": "基本", "level": 3, "book": "ミカ書", "ref": "ミカ{書|しょ} 4{章|しょう}", "note": "{槍|やり}はかまに{打|う}ち{直|なお}し、もはや{戦|たたか}いを{学|まな}ばない、と{続|つづ}きます。", "order": 225}, {"id": "O_na1", "q": "ナホム{書|かき}が{滅亡|めつぼう}を{預言|よげん}した{町|まち}は?", "answer": "ニネベ", "wrong": ["バビロン", "エルサレム", "ツロ"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "ナホム書", "ref": "ナホム{書|しょ} 1〜3{章|しょう}", "note": "かつてヨナの{言葉|ことば}で{悔|く}い{改|あらた}めた{町|まち}でしたが、{再|ふたた}び{悪|あく}に{傾|かたむ}いていました。", "order": 226}, {"id": "O_na2", "q": "ニネベは、どの{国|くに}の{都|みやこ}だった?", "answer": "アッシリア", "wrong": ["ペルシア", "エジプト", "バビロン"], "cat": "旧約", "theme": "基本", "level": 3, "book": "ナホム書", "ref": "ナホム{書|しょ} 1{章|しょう}", "note": "アッシリアは{北|きた}イスラエル{王国|おうこく}を{滅|ほろ}ぼした{強大|きょうだい}な{国|くに}でした。", "order": 227}, {"id": "O_na3", "q": "ナホム{書|しょ}1{章|しょう}で、{主|しゅ}は{苦難|くなん}の{日|ひ}の{何|なに}だと{言|い}われている?", "answer": "{砦|とりで}", "wrong": ["{嵐|あらし}", "{剣|つるぎ}", "{影|かげ}"], "cat": "旧約", "theme": "基本", "level": 3, "book": "ナホム書", "ref": "ナホム{書|しょ} 1{章|しょう}", "note": "{主|しゅ}はいつくしみ{深|ふか}く、{身|み}を{避|さ}ける{者|もの}を{知|し}っておられると{語|かた}られます。", "order": 228}, {"id": "O_hb1", "q": "ハバクク{書|しょ}2{章|しょう}で、{正|ただ}しい{人|ひと}は{何|なに}によって{生|い}きると{言|い}われている?", "answer": "{信仰|しんこう}", "wrong": ["{律法|りっぽう}", "{富|とみ}", "{力|ちから}"], "cat": "旧約", "theme": "基本", "level": 2, "book": "ハバクク書", "ref": "ハバクク{書|しょ} 2{章|しょう}", "note": "この{言葉|ことば}はローマ{人|じん}への{手紙|てがみ}やガラテヤ{人|じん}への{手紙|てがみ}でも{引用|いんよう}されています。", "order": 229}, {"id": "O_hb2", "q": "ハバククが{神|かみ}に{向|む}かって{投|な}げかけた{問|と}いは?", "answer": "なぜ{悪|あく}が{栄|さか}えるのを{見過|みす}ごされるのか", "wrong": ["なぜ{雨|あめ}が{降|ふ}らないのか", "なぜ{王|おう}が{選|えら}ばれないのか", "なぜ{自分|じぶん}が{選|えら}ばれたのか"], "cat": "旧約", "theme": "人物", "level": 3, "book": "ハバクク書", "ref": "ハバクク{書|しょ} 1{章|しょう}", "note": "{神|かみ}と{対話|たいわ}しながら、{信仰|しんこう}の{答|こた}えへと{導|みちび}かれていきます。", "order": 230}, {"id": "O_hb3", "q": "ハバクク{書|しょ}3{章|しょう}で、{作物|さくもつ}が{実|みの}らなくても、{預言者|よげんしゃ}は{何|なに}をすると{言|い}った?", "answer": "{主|しゅ}にあって{喜|よろこ}ぶ", "wrong": ["{町|まち}を{去|さ}る", "{泣|な}き{続|つづ}ける", "{祈|いの}るのをやめる"], "cat": "旧約", "theme": "基本", "level": 2, "book": "ハバクク書", "ref": "ハバクク{書|しょ} 3{章|しょう}", "note": "{主|しゅ}は{私|わたし}の{力|ちから}、と{告白|こくはく}して{書|しょ}が{結|むす}ばれます。", "order": 231}, {"id": "O_zp1", "q": "ゼパニヤ{書|かき}が{強|つよ}く{警告|けいこく}している{日|ひ}は?", "answer": "{主|しゅ}の{日|ひ}", "wrong": ["{安息日|あんそくび}", "{過越|すぎこし}の{日|ひ}", "{新年|しんねん}の{日|ひ}"], "cat": "旧約", "theme": "基本", "level": 2, "book": "ゼパニヤ書", "ref": "ゼパニヤ{書|しょ} 1{章|しょう}", "note": "{主|しゅ}の{日|ひ}は{近|ちか}い、と{人々|ひとびと}に{悔|く}い{改|あらた}めを{呼|よ}びかけました。", "order": 232}, {"id": "O_zp2", "q": "ゼパニヤが{預言|よげん}したのは、どの{王|おう}の{時代|じだい}?", "answer": "ヨシヤ", "wrong": ["ダビデ", "ソロモン", "サウル"], "cat": "旧約", "theme": "人物", "level": 3, "book": "ゼパニヤ書", "ref": "ゼパニヤ{書|しょ} 1{章|しょう}", "note": "ヨシヤ{王|おう}はのちに、{律法|りっぽう}の{書|しょ}に{基|もと}づく{改|あらた}{革|かわ}を{行|おこな}いました。", "order": 233}, {"id": "O_zp3", "q": "ゼパニヤ{書|しょ}3{章|しょう}で、{主|しゅ}はあなたのことをどのように{喜|よろこ}ばれると{言|い}われている?", "answer": "{高|たか}らかに{歌|うた}って", "wrong": ["{黙|だま}って{遠|とお}くから", "{涙|なみだ}を{流|なが}して", "{厳|きび}しく{試|ため}しながら"], "cat": "旧約", "theme": "基本", "level": 3, "book": "ゼパニヤ書", "ref": "ゼパニヤ{書|しょ} 3{章|しょう}", "note": "{主|しゅ}はあなたのただ{中|なか}におられる{勇士|ゆうし}だと{語|かた}られます。", "order": 234}, {"id": "O_hg1", "q": "ハガイが{民|たみ}に{促|うなが}したことは?", "answer": "{神殿|しんでん}の{再建|さいけん}", "wrong": ["{城壁|じょうへき}の{再建|さいけん}", "{戦|たたか}いの{準備|じゅんび}", "{別|べつ}の{地|ち}への{移住|いじゅう}"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "ハガイ書", "ref": "ハガイ{書|しょ} 1{章|しょう}", "note": "{自分|じぶん}の{家|いえ}ばかり{整|ととの}えて、{主|しゅ}の{宮|みや}が{廃墟|はいきょ}のままだと{指摘|してき}しました。", "order": 235}, {"id": "O_hg2", "q": "ハガイと{同|おな}じ{時代|じだい}に、{神殿|しんでん}{再建|さいけん}を{励|はげ}ました{預言者|よげんしゃ}は?", "answer": "ゼカリヤ", "wrong": ["エリヤ", "イザヤ", "ヨナ"], "cat": "旧約", "theme": "人物", "level": 3, "book": "ハガイ書", "ref": "ハガイ{書|しょ} 1{章|しょう}", "note": "{二人|ふたり}の{励|はげ}ましによって、{止|と}まっていた{工事|こうじ}が{再開|さいかい}されました。", "order": 236}, {"id": "O_hg3", "q": "ハガイが{主|しゅ}の{言葉|ことば}を{伝|つた}えた、ユダの{総督|そうとく}は?", "answer": "ゼルバベル", "wrong": ["ネヘミヤ", "ダレイオス", "エズラ"], "cat": "旧約", "theme": "人物", "level": 3, "book": "ハガイ書", "ref": "ハガイ{書|しょ} 1{章|しょう}", "note": "{大祭司|だいさいし}ヨシュアにも、{同|おな}じ{言葉|ことば}が{伝|つた}えられました。", "order": 237}, {"id": "O_zc1", "q": "ゼカリヤ{書|しょ}9{章|しょう}で、{王|おう}はどのようにエルサレムに{来|く}ると{預言|よげん}されている?", "answer": "ろばの{子|こ}に{乗|の}って", "wrong": ["{戦車|せんしゃ}に{乗|の}って", "{軍馬|ぐんば}に{乗|の}って", "{船|ふね}に{乗|の}って"], "cat": "旧約", "theme": "できごと", "level": 2, "book": "ゼカリヤ書", "ref": "ゼカリヤ{書|しょ} 9{章|しょう}", "note": "イエスがエルサレムに{入|はい}られたとき、この{預言|よげん}が{成就|じょうじゅ}したと{福音書|ふくいんしょ}は{語|かた}ります。", "order": 238}, {"id": "O_zc2", "q": "ゼカリヤ{書|しょ}4{章|しょう}で、{事|こと}は{権力|けんりょく}にも{能力|のうりょく}にもよらず、{何|なに}によってなると{言|い}われている?", "answer": "{主|しゅ}の{霊|れい}", "wrong": ["{王|おう}の{命令|めいれい}", "{多|おお}くの{富|とみ}", "{兵|へい}の{数|かず}"], "cat": "旧約", "theme": "基本", "level": 3, "book": "ゼカリヤ書", "ref": "ゼカリヤ{書|しょ} 4{章|しょう}", "note": "{神殿|しんでん}{再建|さいけん}を{任|まか}されたゼルバベルへの{言葉|ことば}です。", "order": 239}, {"id": "O_zc3", "q": "ゼカリヤ{書|しょ}11{章|しょう}で、{羊飼|ひつじか}いの{賃金|ちんぎん}として{量|はか}られた{銀|ぎん}は{何|なん}{枚|まい}?", "answer": "30{枚|まい}", "wrong": ["10{枚|まい}", "100{枚|まい}", "1{枚|まい}"], "cat": "旧約", "theme": "できごと", "level": 3, "book": "ゼカリヤ書", "ref": "ゼカリヤ{書|しょ} 11{章|しょう}", "note": "マタイの{福音書|ふくいんしょ}で、ユダの{裏切|うらぎ}りの{代価|だいか}と{結|むす}びつけて{語|かた}られています。", "order": 240}, {"id": "L_ro1", "q": "ローマ{人|じん}への{手紙|てがみ}を{書|か}いたのは?", "answer": "パウロ", "wrong": ["ペテロ", "ヨハネ", "ヤコブ"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ローマ人への手紙", "ref": "ローマ{人|じん}への{手紙|てがみ} 1{章|しょう}", "note": "まだ{訪|おとず}れたことのないローマの{教会|きょうかい}に、{自分|じぶん}の{信|しん}じる{福音|ふくいん}をまとめて{書|か}き{送|おく}りました。", "order": 241}, {"id": "L_ro2", "q": "ローマ{人|じん}への{手紙|てがみ}が{強調|きょうちょう}している、{人|ひと}が{神|かみ}の{前|まえ}に{義|ぎ}と{認|みと}められる{道|みち}は?", "answer": "{信仰|しんこう}によって", "wrong": ["{律法|りっぽう}を{守|まも}ることによって", "ささげ{物|もの}によって", "{割礼|かつれい}によって"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ローマ人への手紙", "ref": "ローマ{人|じん}への{手紙|てがみ} 3{章|しょう}", "note": "{人|ひと}は{律法|りっぽう}の{行|おこな}いとは{関係|かんけい}なく、{信仰|しんこう}によって{義|ぎ}と{認|みと}められると{語|かた}られます。", "order": 242}, {"id": "L_ro3", "q": "ローマ{人|じん}への{手紙|てがみ}3{章|しょう}で、すべての{人|ひと}について{語|かた}られていることは?", "answer": "すべての{人|ひと}が{罪|つみ}を{犯|おか}した", "wrong": ["{一部|いちぶ}の{人|ひと}だけが{罪|つみ}を{犯|おか}した", "ユダヤ{人|じん}には{罪|つみ}がない", "{人|ひと}は{生|う}まれつき{正|ただ}しい"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ローマ人への手紙", "ref": "ローマ{人|じん}への{手紙|てがみ} 3{章|しょう}", "note": "すべての{人|ひと}が{罪|つみ}を{犯|おか}し、{神|かみ}の{栄光|えいこう}を{受|う}けることができないと{述|の}べられます。", "order": 243}, {"id": "L_ro4", "q": "ローマ{人|じん}への{手紙|てがみ}4{章|しょう}で、アブラハムが{義|ぎ}と{認|みと}められた{理由|りゆう}として{挙|あ}げられているのは?", "answer": "{神|かみ}を{信|しん}じたこと", "wrong": ["{割礼|かつれい}を{受|う}けたこと", "{律法|りっぽう}を{守|まも}ったこと", "{多|おお}くの{財産|ざいさん}をささげたこと"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ローマ人への手紙", "ref": "ローマ{人|じん}への{手紙|てがみ} 4{章|しょう}", "note": "{割礼|かつれい}を{受|う}ける{前|まえ}に、{信|しん}じたことで{義|ぎ}と{認|みと}められたと{説明|せつめい}されます。", "order": 244}, {"id": "L_ro5", "q": "ローマ{人|じん}への{手紙|てがみ}6{章|しょう}で、{罪|つみ}の{報酬|ほうしゅう}は{何|なに}だと{言|い}われている?", "answer": "{死|し}", "wrong": ["{病|やまい}", "{貧|まず}しさ", "{追放|ついほう}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ローマ人への手紙", "ref": "ローマ{人|じん}への{手紙|てがみ} 6{章|しょう}", "note": "{一方|いっぽう}で、{神|かみ}の{賜物|たまもの}はキリスト・イエスにある{永遠|えいえん}のいのちだと{語|かた}られます。", "order": 245}, {"id": "L_ro6", "q": "ローマ{人|じん}への{手紙|てがみ}8{章|しょう}で、{何|なに}ものも{私|わたし}たちを{引|ひ}き{離|はな}すことができないとされているのは?", "answer": "{神|かみ}の{愛|あい}", "wrong": ["{律法|りっぽう}", "{教会|きょうかい}の{建物|たてもの}", "{生|う}まれた{国|くに}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ローマ人への手紙", "ref": "ローマ{人|じん}への{手紙|てがみ} 8{章|しょう}", "note": "{死|し}もいのちも、どんな{被造物|ひぞうぶつ}も、キリストにある{神|かみ}の{愛|あい}から{引|ひ}き{離|はな}せないと{語|かた}られます。", "order": 246}, {"id": "L_ro7", "q": "ローマ{人|じん}への{手紙|てがみ}12{章|しょう}で、{自分|じぶん}のからだを{何|なに}としてささげるよう{勧|すす}められている?", "answer": "{生|い}きたささげ{物|もの}", "wrong": ["{焼|や}き{尽|つ}くすささげ{物|もの}", "{神殿|しんでん}の{石|いし}", "{王|おう}へのみつぎ{物|もの}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ローマ人への手紙", "ref": "ローマ{人|じん}への{手紙|てがみ} 12{章|しょう}", "note": "それこそが{神|かみ}にふさわしい{礼拝|れいはい}だと{勧|すす}められています。", "order": 247}, {"id": "L_c11", "q": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち}で、パウロがまず{戒|いまし}めた{教会|きょうかい}の{問題|もんだい}は?", "answer": "{教会|きょうかい}{内|ない}の{仲間|なかま}{割|わ}れ", "wrong": ["{外国|がいこく}からの{迫害|はくがい}", "ききん", "{建物|たてもの}の{不|ふ}{足|あし}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "コリント人への手紙第一", "ref": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち} 1{章|しょう}", "note": "「{私|わたし}はパウロにつく」「{私|わたし}はアポロに」と{言|い}い{合|あ}う{分|ぶん}{裂|さ}を{戒|いまし}めました。", "order": 248}, {"id": "L_c12", "q": "コリント{人|じん}への てがみ{第|だい}{一|いち}13しょう「あいの しょう」で、いつまでも のこる 3つは?", "answer": "{信仰|しんこう}と{希望|きぼう}と{愛|あい}", "wrong": ["{知恵|ちえ}と{力|ちから}と{富|とみ}", "{歌|うた}と{祈|いの}りと{断食|だんじき}", "{光|ひかり}と{塩|しお}と{水|みず}"], "cat": "新約", "theme": "書簡", "level": 1, "book": "コリント人への手紙第一", "ref": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち} 13{章|しょう}", "note": "その{中|なか}でいちばんすぐれているのは{愛|あい}だと{結|むす}ばれます。", "order": 249}, {"id": "L_c13", "q": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち}12{章|しょう}で、{教会|きょうかい}は{何|なに}にたとえられている?", "answer": "キリストのからだ", "wrong": ["{船|ふね}", "{軍隊|ぐんたい}", "{市場|いちば}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "コリント人への手紙第一", "ref": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち} 12{章|しょう}", "note": "からだに{多|おお}くの{部分|ぶぶん}があるように、{教会|きょうかい}にもいろいろな{賜物|たまもの}をもつ{人|ひと}がいると{語|かた}られます。", "order": 250}, {"id": "L_c14", "q": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち}6{章|しょう}で、{私|わたし}たちのからだは{何|なに}だと{言|い}われている?", "answer": "{聖霊|せいれい}の{宮|みや}", "wrong": ["{土|つち}の{器|うつわ}", "{神殿|しんでん}の{門|もん}", "{律法|りっぽう}の{板|いた}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "コリント人への手紙第一", "ref": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち} 6{章|しょう}", "note": "だから{自分|じぶん}のからだで{神|かみ}の{栄光|えいこう}を{現|あらわ}しなさいと{勧|すす}められます。", "order": 251}, {"id": "L_c15", "q": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち}15{章|しょう}の{中|なか}{心|こころ}となるテーマは?", "answer": "キリストの{復活|ふっかつ}と{死|し}{者|もの}の{復活|ふっかつ}", "wrong": ["{結婚|けっこん}の{教|おし}え", "{食|た}べ{物|もの}の{決|き}まり", "{献|ささ}{金|きん}の{集|あつ}め{方|かた}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "コリント人への手紙第一", "ref": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち} 15{章|しょう}", "note": "キリストの{復活|ふっかつ}がなければ、{私|わたし}たちの{信仰|しんこう}は{空|むな}しいとまで{語|かた}られます。", "order": 252}, {"id": "L_c16", "q": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち}11{章|しょう}でパウロが{伝|つた}えた、{主|しゅ}イエスが{渡|わた}される{夜|よる}に{定|さだ}めたものは?", "answer": "{主|しゅ}の{晩餐|ばんさん}", "wrong": ["{足|あし}を{洗|あら}う{儀式|ぎしき}", "{断食|だんじき}の{日|ひ}", "{安息日|あんそくび}の{祈|いの}り"], "cat": "新約", "theme": "書簡", "level": 3, "book": "コリント人への手紙第一", "ref": "コリント{人|じん}への{手紙|てがみ}{第|だい}{一|いち} 11{章|しょう}", "note": "パンと{杯|さかずき}によって、{主|しゅ}の{死|し}を{告|つ}げ{知|し}らせるよう{教|おし}えられました。", "order": 253}, {"id": "L_c21", "q": "コリント{人|じん}への{手紙|てがみ}{第|だい}{二|に}5{章|しょう}で、キリストのうちにある{人|ひと}は{何|なに}だと{言|い}われている?", "answer": "{新|あたら}しく{造|つく}られた{者|もの}", "wrong": ["{古|ふる}い{人|ひと}のまま", "{律法|りっぽう}の{下|した}にある{者|もの}", "{旅人|たびびと}にすぎない{者|もの}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "コリント人への手紙第二", "ref": "コリント{人|じん}への{手紙|てがみ}{第|だい}{二|に} 5{章|しょう}", "note": "{古|ふる}いものは{過|す}ぎ{去|さ}り、すべてが{新|あたら}しくなったと{語|かた}られます。", "order": 254}, {"id": "L_c22", "q": "コリント{人|じん}への{手紙|てがみ}{第|だい}{二|に}4{章|しょう}で、{私|わたし}たちは{宝|たから}をどんな{器|うつわ}に{入|い}れていると{表現|ひょうげん}されている?", "answer": "{土|つち}の{器|うつわ}", "wrong": ["{金|きん}の{器|うつわ}", "{銀|ぎん}の{器|うつわ}", "{石|いし}の{器|うつわ}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "コリント人への手紙第二", "ref": "コリント{人|じん}への{手紙|てがみ}{第|だい}{二|に} 4{章|しょう}", "note": "{測|はか}り{知|し}れない{力|ちから}が、{自分|じぶん}たちではなく{神|かみ}のものであることを{表|あらわ}しています。", "order": 255}, {"id": "L_c23", "q": "コリント{人|じん}への{手紙|てがみ}{第|だい}{二|に}12{章|しょう}で、パウロが{三|さん}{度|ど}{取|と}り{去|さ}ってほしいと{願|ねが}ったものは?", "answer": "{肉体|にくたい}のとげ", "wrong": ["{牢|ろう}の{鎖|くさり}", "{目|め}の{病|やまい}", "{過去|かこ}の{罪|つみ}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "コリント人への手紙第二", "ref": "コリント{人|じん}への{手紙|てがみ}{第|だい}{二|に} 12{章|しょう}", "note": "{主|しゅ}は、わたしの{恵|めぐ}みはあなたに{十分|じゅうぶん}であり、{力|ちから}は{弱|よわ}さのうちに{完|かん}{全|ぜん}に{現|あらわ}れると{答|こた}えられました。", "order": 256}, {"id": "L_c24", "q": "コリント{人|じん}への{手紙|てがみ}{第|だい}{二|に}9{章|しょう}で、{神|かみ}が{愛|あい}されるのはどんな{人|ひと}?", "answer": "{喜|よろこ}んで{与|あた}える{人|ひと}", "wrong": ["たくさん{与|あた}える{人|ひと}", "{人|ひと}に{見|み}られるように{与|あた}える{人|ひと}", "{何|なに}も{与|あた}えない{人|ひと}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "コリント人への手紙第二", "ref": "コリント{人|じん}への{手紙|てがみ}{第|だい}{二|に} 9{章|しょう}", "note": "いやいやながらでも{強|し}いられてでもなく、{心|こころ}で{決|き}めたとおりに{与|あた}えるよう{勧|すす}められます。", "order": 257}, {"id": "L_ga1", "q": "ガラテヤ{人|じん}への てがみの「{御霊|みたま}の{実|み}」の ひとつは?", "answer": "{愛|あい}", "wrong": ["お{金|きん}", "{強|つよ}さ", "いかり"], "cat": "新約", "theme": "書簡", "level": 1, "book": "ガラテヤ人への手紙", "ref": "ガラテヤ{人|じん}への{手紙|てがみ} 5{章|しょう}", "note": "{御霊|みたま}の{実|み}は、{愛|あい}、{喜|よろこ}び、{平安|へいあん}、{寛容|かんよう}、{親切|しんせつ}、{善意|ぜんい}、{誠実|せいじつ}、{柔和|にゅうわ}、{自制|じせい}です。", "order": 258}, {"id": "L_ga2", "q": "ガラテヤ{人|じん}への{手紙|てがみ}5{章|しょう}の「{御霊|みたま}の{実|み}」に{含|ふく}まれないのは?", "answer": "{富|とみ}", "wrong": ["{喜|よろこ}び", "{平安|へいあん}", "{自制|じせい}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ガラテヤ人への手紙", "ref": "ガラテヤ{人|じん}への{手紙|てがみ} 5{章|しょう}", "note": "{御霊|みたま}に{導|みちび}かれて{歩|あゆ}む{人|ひと}の{中|なか}に{実|み}る、{九|ここの}つの{性質|せいしつ}が{挙|あ}げられています。", "order": 259}, {"id": "L_ga3", "q": "ガラテヤの{教会|きょうかい}でパウロが{厳|きび}しく{戒|いまし}めたのは、どんな{教|おし}えに{引|ひ}き{込|こ}まれていたこと?", "answer": "{救|すく}われるには{割礼|かつれい}や{律法|りっぽう}が{必要|ひつよう}だという{教|おし}え", "wrong": ["{偶像|ぐうぞう}にささげた{肉|にく}を{食|た}べる{教|おし}え", "{異言|いげん}を{禁|きん}じる{教|おし}え", "{献|ささ}{金|きん}をやめる{教|おし}え"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ガラテヤ人への手紙", "ref": "ガラテヤ{人|じん}への{手紙|てがみ} 1〜5{章|しょう}", "note": "{人|ひと}は{律法|りっぽう}の{行|おこな}いではなく、キリストを{信|しん}じる{信仰|しんこう}によって{義|ぎ}と{認|みと}められると{語|かた}ります。", "order": 260}, {"id": "L_ga4", "q": "ガラテヤ{人|じん}への{手紙|てがみ}2{章|しょう}で、パウロが{面|めん}と{向|む}かって{非難|ひなん}した{使徒|しと}は?", "answer": "ケファ(ペテロ)", "wrong": ["ヨハネ", "ヤコブ", "バルナバ"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ガラテヤ人への手紙", "ref": "ガラテヤ{人|じん}への{手紙|てがみ} 2{章|しょう}", "note": "{異邦人|いほうじん}と{食事|しょくじ}をしていたのに、{人|ひと}を{恐|おそ}れて{身|み}を{引|ひ}いたことを{指摘|してき}しました。", "order": 261}, {"id": "L_ga5", "q": "ガラテヤ{人|じん}への{手紙|てがみ}3{章|しょう}で、キリストにあってなくなる{区別|くべつ}として{挙|あ}げられていないのは?", "answer": "{年齢|ねんれい}の{違|ちが}い", "wrong": ["ユダヤ{人|じん}とギリシア{人|じん}", "{奴隷|どれい}と{自由人|じゆうじん}", "{男|おとこ}と{女|おんな}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ガラテヤ人への手紙", "ref": "ガラテヤ{人|じん}への{手紙|てがみ} 3{章|しょう}", "note": "{皆|みな}、キリスト・イエスにあって{一|ひと}つだと{語|かた}られます。", "order": 262}, {"id": "L_ep1", "q": "エペソ{人|じん}への てがみで、からだに つける「{信仰|しんこう}の ○○」は?", "answer": "{盾|たて}", "wrong": ["くつ", "かぶと", "{帯|おび}"], "cat": "新約", "theme": "書簡", "level": 1, "book": "エペソ人への手紙", "ref": "エペソ{人|じん}への{手紙|てがみ} 6{章|しょう}", "note": "{信仰|しんこう}の{盾|たて}で、{悪|わる}い{者|もの}の{火矢|ひや}をすべて{消|け}すことができると{語|かた}られます。", "order": 263}, {"id": "L_ep2", "q": "エペソ{人|じん}への{手紙|てがみ}2{章|しょう}で、{私|わたし}たちが{救|すく}われたのは{何|なに}によると{言|い}われている?", "answer": "{恵|めぐ}みにより、{信仰|しんこう}によって", "wrong": ["{自分|じぶん}の{行|おこな}いによって", "{生|う}まれた{家|いえ}によって", "ささげ{物|もの}によって"], "cat": "新約", "theme": "書簡", "level": 2, "book": "エペソ人への手紙", "ref": "エペソ{人|じん}への{手紙|てがみ} 2{章|しょう}", "note": "それは{自分|じぶん}から{出|で}たことではなく、{神|かみ}の{賜物|たまもの}だと{語|かた}られます。", "order": 264}, {"id": "L_ep3", "q": "エペソ{人|じん}への{手紙|てがみ}6{章|しょう}で、{悪魔|あくま}の{策略|さくりゃく}に{立|た}ち{向|む}かうために{身|み}に{着|つ}けるよう{勧|すす}められているのは?", "answer": "{神|かみ}のすべての{武具|ぶぐ}", "wrong": ["{王|おう}の{衣|ころも}", "{祭司|さいし}の{服|ふく}", "{金|きん}の{冠|かんむり}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "エペソ人への手紙", "ref": "エペソ{人|じん}への{手紙|てがみ} 6{章|しょう}", "note": "{真理|しんり}の{帯|おび}、{正義|せいぎ}の{胸当|むねあ}て、{信仰|しんこう}の{盾|たて}、{救|すく}いのかぶとなどが{挙|あ}げられています。", "order": 265}, {"id": "L_ep4", "q": "エペソ{人|じん}への{手紙|てがみ}6{章|しょう}の{神|かみ}の{武具|ぶぐ}で、「{御霊|みたま}の{剣|つるぎ}」とされているのは?", "answer": "{神|かみ}のことば", "wrong": ["{祈|いの}り", "{信仰|しんこう}", "{真理|しんり}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "エペソ人への手紙", "ref": "エペソ{人|じん}への{手紙|てがみ} 6{章|しょう}", "note": "{武具|ぶぐ}の{中|なか}で、{唯一|ゆいいつ}の{攻|せ}める{武器|ぶき}として{語|かた}られます。", "order": 266}, {"id": "L_ep5", "q": "エペソ{人|じん}への{手紙|てがみ}6{章|しょう}で、{子|こ}どもたちに{向|む}けて{語|かた}られている{戒|いまし}めは?", "answer": "{主|しゅ}にあって{両親|りょうしん}に{従|したが}う", "wrong": ["{兄弟|きょうだい}を{養|やしな}う", "{毎日|まいにち}{断食|だんじき}する", "{早|はや}く{家|いえ}を{出|で}る"], "cat": "新約", "theme": "書簡", "level": 3, "book": "エペソ人への手紙", "ref": "エペソ{人|じん}への{手紙|てがみ} 6{章|しょう}", "note": "これは{約束|やくそく}を{伴|ともな}う{第|だい}{一|いち}の{戒|いまし}めだと{説明|せつめい}されています。", "order": 267}, {"id": "L_ph1", "q": "ピリピ{人|じん}への てがみで、いつも どうしなさいと いわれている?", "answer": "{主|しゅ}にあって {喜|よろこ}ぶ", "wrong": ["おこる", "ねむる", "がまんして だまる"], "cat": "新約", "theme": "書簡", "level": 1, "book": "ピリピ人への手紙", "ref": "ピリピ{人|じん}への{手紙|てがみ} 4{章|しょう}", "note": "{大切|たいせつ}なことなので、もう{一|いち}{度|ど}{言|い}います、{喜|よろこ}びなさいとくり{返|かえ}されます。", "order": 268}, {"id": "L_ph2", "q": "ピリピ{人|じん}への{手紙|てがみ}で、くり{返|かえ}し{語|かた}られているテーマは?", "answer": "{喜|よろこ}び", "wrong": ["{怒|いか}り", "{恐|おそ}れ", "{悲|かな}しみ"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ピリピ人への手紙", "ref": "ピリピ{人|じん}への{手紙|てがみ} 1〜4{章|しょう}", "note": "{苦|くる}しい{状況|じょうきょう}の{中|なか}で{書|か}かれたのに、{喜|よろこ}びが{何|なに}{度|ど}も{語|かた}られます。", "order": 269}, {"id": "L_ph3", "q": "ピリピ{人|じん}への{手紙|てがみ}を{書|か}いたとき、パウロはどこにいた?", "answer": "{獄中|ごくちゅう}({牢|ろう}の{中|なか})", "wrong": ["{船|ふね}の{上|うえ}", "{神殿|しんでん}の{中|なか}", "{荒野|こうや}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ピリピ人への手紙", "ref": "ピリピ{人|じん}への{手紙|てがみ} 1{章|しょう}", "note": "{捕|と}らわれていることが、かえって{福音|ふくいん}を{前進|ぜんしん}させたと{語|かた}っています。", "order": 270}, {"id": "L_ph4", "q": "ピリピ{人|じん}への{手紙|てがみ}4{章|しょう}で、{何|なに}も{思|おも}い{煩|わずら}わずにどうするよう{勧|すす}められている?", "answer": "{祈|いの}りと{願|ねが}いによって{神|かみ}に{知|し}っていただく", "wrong": ["{自分|じぶん}の{力|ちから}で{解決|かいけつ}する", "だれにも{言|い}わずに{我慢|がまん}する", "{忘|わす}れるまで{待|ま}つ"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ピリピ人への手紙", "ref": "ピリピ{人|じん}への{手紙|てがみ} 4{章|しょう}", "note": "そうすれば、{人|ひと}のすべての{理解|りかい}を{超|こ}えた{神|かみ}の{平安|へいあん}が{心|こころ}を{守|まも}ると{語|かた}られます。", "order": 271}, {"id": "L_ph5", "q": "ピリピ{人|じん}への{手紙|てがみ}2{章|しょう}で、{私|わたし}たちの{模範|もはん}として{示|しめ}されているキリストの{姿|すがた}は?", "answer": "{自分|じぶん}を{低|ひく}くして{仕|つか}える{者|もの}となった", "wrong": ["{王|おう}として{人々|ひとびと}を{支配|しはい}した", "{多|おお}くの{富|とみ}を{集|あつ}めた", "{律法|りっぽう}を{厳|きび}しく{守|まも}らせた"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ピリピ人への手紙", "ref": "ピリピ{人|じん}への{手紙|てがみ} 2{章|しょう}", "note": "{十字|じゅうじ}{架|か}の{死|し}にまで{従|したが}われたキリストを、{神|かみ}は{高|たか}く{上|あ}げられたと{語|かた}られます。", "order": 272}, {"id": "L_co1", "q": "コロサイ{人|じん}への{手紙|てがみ}1{章|しょう}で、{万物|ばんぶつ}は{誰|だれ}によって{造|つく}られたと{言|い}われている?", "answer": "{御子|みこ}(キリスト)", "wrong": ["{御使|みつか}いたち", "モーセ", "{人|ひと}の{手|て}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "コロサイ人への手紙", "ref": "コロサイ{人|じん}への{手紙|てがみ} 1{章|しょう}", "note": "{天|てん}にあるもの、{地|ち}にあるもの、すべてが{御子|みこ}によって{造|つく}られたと{語|かた}られます。", "order": 273}, {"id": "L_co2", "q": "コロサイ{人|じん}への{手紙|てがみ}3{章|しょう}で、{何|なに}をするにもだれに{対|たい}してするように{心|こころ}からしなさいと{言|い}われている?", "answer": "{主|しゅ}に{対|たい}して", "wrong": ["{王|おう}に{対|たい}して", "{親|おや}に{対|たい}して", "{自分|じぶん}に{対|たい}して"], "cat": "新約", "theme": "書簡", "level": 2, "book": "コロサイ人への手紙", "ref": "コロサイ{人|じん}への{手紙|てがみ} 3{章|しょう}", "note": "{人|ひと}に{対|たい}してではなく、{主|しゅ}に{対|たい}してするように{働|はたら}きなさいと{勧|すす}められます。", "order": 274}, {"id": "L_co3", "q": "コロサイ{人|じん}への{手紙|てがみ}3{章|しょう}で、すべての{上|うえ}に{着|つ}けるよう{勧|すす}められている、{結|むす}びの{帯|おび}として{完|かん}{全|ぜん}なものは?", "answer": "{愛|あい}", "wrong": ["{知恵|ちえ}", "{力|ちから}", "{富|とみ}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "コロサイ人への手紙", "ref": "コロサイ{人|じん}への{手紙|てがみ} 3{章|しょう}", "note": "あわれみ、{親切|しんせつ}、{謙遜|けんそん}、{柔和|にゅうわ}、{寛容|かんよう}を{身|み}に{着|つ}け、その{上|うえ}に{愛|あい}を{着|つ}けなさいと{語|かた}られます。", "order": 275}, {"id": "L_co4", "q": "コロサイ{人|じん}への{手紙|てがみ}4{章|しょう}で、パウロと{一緒|いっしょ}にあいさつを{送|おく}っている「{愛|あい}する{医者|いしゃ}」は?", "answer": "ルカ", "wrong": ["テモテ", "マルコ", "ティキコ"], "cat": "新約", "theme": "書簡", "level": 3, "book": "コロサイ人への手紙", "ref": "コロサイ{人|じん}への{手紙|てがみ} 4{章|しょう}", "note": "ルカは、ルカの{福音書|ふくいんしょ}と{使徒|しと}の{働|はたら}きを{書|か}いたとされる{人物|じんぶつ}です。", "order": 276}, {"id": "L_t11", "q": "テサロニケ{人|じん}への てがみ{第|だい}{一|いち}で、「いつも{喜|よろこ}んでいなさい。{絶|た}えず{祈|いの}りなさい。」の あとに つづく ことばの ないようは?", "answer": "すべてのことに{感謝|かんしゃ}する", "wrong": ["すべてのことを{我慢|がまん}する", "すべてのことを{忘|わす}れる", "すべてのことを{急|いそ}ぐ"], "cat": "新約", "theme": "書簡", "level": 1, "book": "テサロニケ人への手紙第一", "ref": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{一|いち} 5{章|しょう}", "note": "これが、キリスト・イエスにあって{神|かみ}が{望|のぞ}んでおられることだと{語|かた}られます。", "order": 277}, {"id": "L_t12", "q": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{一|いち}4{章|しょう}で{語|かた}られている、{大|おお}きなテーマは?", "answer": "{主|しゅ}が{再|ふたた}び{来|こ}られることと、{眠|ねむ}った{人々|ひとびと}の{復活|ふっかつ}", "wrong": ["{献|ささ}{金|きん}の{集|あつ}め{方|かた}", "{結婚|けっこん}の{決|き}まり", "{食|た}べ{物|もの}のきよさ"], "cat": "新約", "theme": "書簡", "level": 2, "book": "テサロニケ人への手紙第一", "ref": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{一|いち} 4{章|しょう}", "note": "{先|さき}に{亡|な}くなった{信者|しんじゃ}たちについて、{悲|かな}しみに{沈|しず}まないよう{希望|きぼう}が{語|かた}られます。", "order": 278}, {"id": "L_t13", "q": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{一|いち}5{章|しょう}で、{主|しゅ}の{日|ひ}はどのように{来|く}ると{言|い}われている?", "answer": "{夜|よる}の{盗人|ぬすびと}のように", "wrong": ["{嵐|あらし}のように", "{春|はる}の{訪|おとず}れのように", "{戦|たたか}いのラッパのように"], "cat": "新約", "theme": "書簡", "level": 3, "book": "テサロニケ人への手紙第一", "ref": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{一|いち} 5{章|しょう}", "note": "だから{目|め}を{覚|さ}まし、{身|み}を{慎|つつし}んでいなさいと{勧|すす}められます。", "order": 279}, {"id": "L_t14", "q": "テサロニケの{教会|きょうかい}の{様子|ようす}を{確|たし}かめるため、パウロが{遣|つか}わした{同労者|どうろうしゃ}は?", "answer": "テモテ", "wrong": ["テトス", "バルナバ", "シラス"], "cat": "新約", "theme": "書簡", "level": 2, "book": "テサロニケ人への手紙第一", "ref": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{一|いち} 3{章|しょう}", "note": "テモテは、{教会|きょうかい}が{信仰|しんこう}と{愛|あい}に{立|た}っているという{良|よ}い{知|し}らせを{持|も}ち{帰|かえ}りました。", "order": 280}, {"id": "L_t21", "q": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{二|に}で、{教会|きょうかい}が{惑|まど}わされないよう{注意|ちゅうい}されたことは?", "answer": "{主|しゅ}の{日|ひ}がすでに{来|き}たという{話|はなし}", "wrong": ["{割礼|かつれい}が{必要|ひつよう}だという{話|はなし}", "{献|ささ}{金|きん}がいらないという{話|はなし}", "{安息日|あんそくび}がなくなったという{話|はなし}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "テサロニケ人への手紙第二", "ref": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{二|に} 2{章|しょう}", "note": "すぐに{心|こころ}を{動揺|どうよう}させたり、{慌|あわ}てたりしないよう{勧|すす}められます。", "order": 281}, {"id": "L_t22", "q": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{二|に}2{章|しょう}で、{主|しゅ}の{日|ひ}の{前|まえ}に{現|あらわ}れると{言|い}われているのは?", "answer": "{不法|ふほう}の{者|もの}", "wrong": ["{新|あたら}しい{王|おう}", "{大洪水|だいこうずい}", "{十|じゅう}{二人|ふたり}の{預言者|よげんしゃ}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "テサロニケ人への手紙第二", "ref": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{二|に} 2{章|しょう}", "note": "しかし{主|しゅ}イエスは、{来|こ}られるときにその{者|もの}を{滅|ほろ}ぼされると{語|かた}られます。", "order": 282}, {"id": "L_t23", "q": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{二|に}3{章|しょう}で、{働|はたら}こうとしない{人|ひと}についてパウロが{言|い}ったことは?", "answer": "{食|た}べてはならない", "wrong": ["{教会|きょうかい}から{追|お}い{出|だ}す", "むちで{打|う}つ", "{断食|だんじき}させる"], "cat": "新約", "theme": "書簡", "level": 3, "book": "テサロニケ人への手紙第二", "ref": "テサロニケ{人|じん}への{手紙|てがみ}{第|だい}{二|に} 3{章|しょう}", "note": "{自分|じぶん}で{働|はたら}いて{得|え}たパンを{食|た}べるよう{勧|すす}めています。", "order": 283}, {"id": "L_m11", "q": "テモテへの{手紙|てがみ}{第|だい}{一|いち}は、{誰|だれ}に{宛|あ}てた{手紙|てがみ}?", "answer": "{若|わか}い{同労者|どうろうしゃ}テモテ", "wrong": ["ローマの{皇帝|こうてい}", "エルサレムの{長老|ちょうろう}たち", "パウロの{家族|かぞく}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "テモテへの手紙第一", "ref": "テモテへの{手紙|てがみ}{第|だい}{一|いち} 1{章|しょう}", "note": "パウロはテモテを、{信仰|しんこう}による{真|しん}のわが{子|こ}と{呼|よ}んでいます。", "order": 284}, {"id": "L_m12", "q": "テモテへの{手紙|てがみ}{第|だい}{一|いち}4{章|しょう}で、{若|わか}いことで{軽|かる}く{見|み}られないよう、テモテはどうあるよう{勧|すす}められている?", "answer": "{信者|しんじゃ}の{模範|もはん}となる", "wrong": ["{年長|ねんちょう}{者|しゃ}のふりをする", "{人前|ひとまえ}で{話|はな}さない", "{厳|きび}しく{命令|めいれい}する"], "cat": "新約", "theme": "書簡", "level": 2, "book": "テモテへの手紙第一", "ref": "テモテへの{手紙|てがみ}{第|だい}{一|いち} 4{章|しょう}", "note": "ことば、{態度|たいど}、{愛|あい}、{信仰|しんこう}、{純潔|じゅんけつ}において{模範|もはん}となるよう{勧|すす}められます。", "order": 285}, {"id": "L_m13", "q": "テモテへの{手紙|てがみ}{第|だい}{一|いち}6{章|しょう}で、あらゆる{悪|あく}の{根|ね}だとされているのは?", "answer": "{金銭|きんせん}を{愛|あい}すること", "wrong": ["{怒|おこ}ること", "{怠|なま}けること", "よく{食|た}べること"], "cat": "新約", "theme": "書簡", "level": 3, "book": "テモテへの手紙第一", "ref": "テモテへの{手紙|てがみ}{第|だい}{一|いち} 6{章|しょう}", "note": "{衣食|いしょく}があれば、それで{満足|まんぞく}すべきだと{語|かた}られます。", "order": 286}, {"id": "L_m14", "q": "テモテへの{手紙|てがみ}{第|だい}{一|いち}3{章|しょう}で、その{資格|しかく}が{述|の}べられている{教会|きょうかい}の{働|はたら}き{人|びと}は?", "answer": "{監督|かんとく}と{執事|しつじ}", "wrong": ["{祭司|さいし}とレビ{人|じん}", "{王|おう}と{預言者|よげんしゃ}", "{士師|しし}と{長老|ちょうろう}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "テモテへの手紙第一", "ref": "テモテへの{手紙|てがみ}{第|だい}{一|いち} 3{章|しょう}", "note": "{家庭|かてい}をよく{治|おさ}め、{評判|ひょうばん}の{良|よ}い{人|ひと}であることなどが{挙|あ}げられています。", "order": 287}, {"id": "L_m21", "q": "テモテへの{手紙|てがみ}{第|だい}{二|に}3{章|しょう}で、{聖書|せいしょ}はすべて{何|なに}によると{言|い}われている?", "answer": "{神|かみ}の{霊感|れいかん}", "wrong": ["{人|ひと}の{知恵|ちえ}", "{古|ふる}い{言|い}い{伝|つた}え", "{王|おう}の{命令|めいれい}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "テモテへの手紙第二", "ref": "テモテへの{手紙|てがみ}{第|だい}{二|に} 3{章|しょう}", "note": "{教|おし}えと{戒|いまし}めと{矯正|きょうせい}と{義|ぎ}の{訓練|くんれん}のために{有益|ゆうえき}だと{語|かた}られます。", "order": 288}, {"id": "L_m22", "q": "テモテへの{手紙|てがみ}{第|だい}{二|に}1{章|しょう}で、テモテに{信仰|しんこう}を{受|う}け{継|つ}がせたとされる{祖母|そぼ}と{母|はは}は?", "answer": "ロイスとユニケ", "wrong": ["サラとリベカ", "マルタとマリア", "ナオミとルツ"], "cat": "新約", "theme": "書簡", "level": 3, "book": "テモテへの手紙第二", "ref": "テモテへの{手紙|てがみ}{第|だい}{二|に} 1{章|しょう}", "note": "その{偽|いつわ}りのない{信仰|しんこう}が、テモテのうちにも{宿|やど}っていると{語|かた}られます。", "order": 289}, {"id": "L_m23", "q": "テモテへの{手紙|てがみ}{第|だい}{二|に}4{章|しょう}で、パウロは{自分|じぶん}の{生涯|しょうがい}を{何|なに}にたとえている?", "answer": "{走|はし}るべき{道|みち}のりを{走|はし}り{終|お}えた", "wrong": ["{家|いえ}を{建|た}て{終|お}えた", "{畑|はたけ}を{耕|たがや}し{終|お}えた", "{長|なが}い{航海|こうかい}を{終|お}えた"], "cat": "新約", "theme": "書簡", "level": 2, "book": "テモテへの手紙第二", "ref": "テモテへの{手紙|てがみ}{第|だい}{二|に} 4{章|しょう}", "note": "{立派|りっぱ}に{戦|たたか}い{抜|ぬ}き、{信仰|しんこう}を{守|まも}り{通|とお}したと{語|かた}っています。", "order": 290}, {"id": "L_m24", "q": "テモテへの{手紙|てがみ}{第|だい}{二|に}は、パウロの{生涯|しょうがい}のどの{時期|じき}に{書|か}かれたとされている?", "answer": "{殉教|じゅんきょう}が{近|ちか}い{最後|さいご}の{時期|じき}", "wrong": ["{回心|かいしん}した{直後|ちょくご}", "{第一回|だいいっかい}{伝道|でんどう}{旅行|りょこう}の{途中|とちゅう}", "ローマに{着|つ}く{前|まえ}の{船|ふね}の{中|なか}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "テモテへの手紙第二", "ref": "テモテへの{手紙|てがみ}{第|だい}{二|に} 4{章|しょう}", "note": "{自分|じぶん}が{世|よ}を{去|さ}る{時|とき}が{来|き}たと{語|かた}り、テモテに{早|はや}く{来|く}るよう{頼|たの}んでいます。", "order": 291}, {"id": "L_ti1", "q": "テトスがパウロに{残|のこ}されて{働|はたら}いていた{島|しま}は?", "answer": "クレタ", "wrong": ["キプロス", "マルタ", "パトモス"], "cat": "新約", "theme": "書簡", "level": 3, "book": "テトスへの手紙", "ref": "テトスへの{手紙|てがみ} 1{章|しょう}", "note": "クレタは{地中海|ちちゅうかい}に{浮|う}かぶ{大|おお}きな{島|しま}です。", "order": 292}, {"id": "L_ti2", "q": "テトスへの{手紙|てがみ}で、テトスに{頼|たの}まれた{務|つと}めは?", "answer": "{町|まち}ごとに{長老|ちょうろう}を{立|た}てること", "wrong": ["{神殿|しんでん}を{建|た}てること", "{王|おう}に{手紙|てがみ}を{届|とど}けること", "{船|ふね}を{造|つく}ること"], "cat": "新約", "theme": "書簡", "level": 3, "book": "テトスへの手紙", "ref": "テトスへの{手紙|てがみ} 1{章|しょう}", "note": "{長老|ちょうろう}にふさわしい{人|ひと}の{条件|じょうけん}も{書|か}かれています。", "order": 293}, {"id": "L_ti3", "q": "テトスへの{手紙|てがみ}3{章|しょう}で、{神|かみ}が{私|わたし}たちを{救|すく}ってくださったのは{何|なに}によると{言|い}われている?", "answer": "{神|かみ}のあわれみによって", "wrong": ["{自分|じぶん}の{正|ただ}しい{行|おこな}いによって", "{律法|りっぽう}を{守|まも}ったことによって", "{家|いえ}{柄|がら}によって"], "cat": "新約", "theme": "書簡", "level": 2, "book": "テトスへの手紙", "ref": "テトスへの{手紙|てがみ} 3{章|しょう}", "note": "{聖霊|せいれい}による{新生|しんせい}と{刷新|さっしん}の{洗|あら}いをもって{救|すく}ってくださったと{語|かた}られます。", "order": 294}, {"id": "L_pm1", "q": "ピレモンへの{手紙|てがみ}で、パウロがとりなした、{主人|しゅじん}のもとから{逃|に}げてきた{奴隷|どれい}の{名前|なまえ}は?", "answer": "オネシモ", "wrong": ["ティキコ", "エパフラス", "アルキポ"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ピレモンへの手紙", "ref": "ピレモンへの{手紙|てがみ} 1{章|しょう}", "note": "オネシモはパウロのもとで{信仰|しんこう}を{持|も}ち、{役|やく}に{立|た}つ{者|もの}になりました。", "order": 295}, {"id": "L_pm2", "q": "パウロはピレモンに、オネシモをどのように{受|う}け{入|い}れてほしいと{頼|たの}んだ?", "answer": "{愛|あい}する{兄弟|きょうだい}として", "wrong": ["{罰|ばつ}を{受|う}ける{奴隷|どれい}として", "ただの{雇|やと}い{人|にん}として", "{牢|ろう}に{入|い}れる{者|もの}として"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ピレモンへの手紙", "ref": "ピレモンへの{手紙|てがみ} 1{章|しょう}", "note": "もし{損害|そんがい}があれば、{自分|じぶん}が{払|はら}うとまでパウロは{書|か}いています。", "order": 296}, {"id": "L_pm3", "q": "ピレモンへの{手紙|てがみ}は、{全部|ぜんぶ}で{何|なに}{章|しょう}ある?", "answer": "1{章|しょう}だけ", "wrong": ["3{章|しょう}", "5{章|しょう}", "13{章|しょう}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ピレモンへの手紙", "ref": "ピレモンへの{手紙|てがみ} 1{章|しょう}", "note": "{新約|しんやく}{聖書|せいしょ}の{中|なか}でも、{特|とく}に{短|みじか}い{手紙|てがみ}の{一|ひと}つです。", "order": 297}, {"id": "L_he1", "q": "ヘブル{人|じん}への てがみ11しょうで、{信仰|しんこう}によって {箱舟|はこぶね}を つくったと {書|か}かれているのは?", "answer": "ノア", "wrong": ["モーセ", "ダビデ", "ヨナ"], "cat": "新約", "theme": "書簡", "level": 1, "book": "ヘブル人への手紙", "ref": "ヘブル{人|じん}への{手紙|てがみ} 11{章|しょう}", "note": "まだ{見|み}ていない{事柄|ことがら}について{神|かみ}から{警告|けいこく}を{受|う}け、{恐|おそ}れかしこんで{箱舟|はこぶね}を{造|つく}りました。", "order": 298}, {"id": "L_he2", "q": "ヘブル{人|じん}への{手紙|てがみ}11{章|しょう}では、{何|なに}について{多|おお}くの{人物|じんぶつ}が{挙|あ}げられている?", "answer": "{信仰|しんこう}", "wrong": ["{律法|りっぽう}", "{王|おう}の{系図|けいず}", "{戦|たたか}い"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ヘブル人への手紙", "ref": "ヘブル{人|じん}への{手紙|てがみ} 11{章|しょう}", "note": "アベル、エノク、ノア、アブラハム、モーセなど、{信仰|しんこう}に{生|い}きた{人々|ひとびと}が{紹介|しょうかい}されます。", "order": 299}, {"id": "L_he3", "q": "ヘブル{人|じん}への{手紙|てがみ}で、キリストは{主|しゅ}にどのような{方|かた}として{描|えが}かれている?", "answer": "{偉大|いだい}な{大祭司|だいさいし}", "wrong": ["{王|おう}の{家来|けらい}", "{御使|みつか}いの{一人|ひとり}", "{律法|りっぽう}{学者|がくしゃ}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ヘブル人への手紙", "ref": "ヘブル{人|じん}への{手紙|てがみ} 4{章|しょう}", "note": "{私|わたし}たちの{弱|よわ}さに{同情|どうじょう}できる{大祭司|だいさいし}だと{語|かた}られます。", "order": 300}, {"id": "L_he4", "q": "ヘブル{人|じん}への{手紙|てがみ}4{章|しょう}で、{神|かみ}のことばは{何|なに}よりも{鋭|するど}いと{言|い}われている?", "answer": "{両刃|もろは}の{剣|つるぎ}", "wrong": ["{稲妻|いなずま}", "{獅子|しし}の{牙|きば}", "{弓|ゆみ}の{矢|や}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ヘブル人への手紙", "ref": "ヘブル{人|じん}への{手紙|てがみ} 4{章|しょう}", "note": "{心|こころ}の{思|おも}いやはかりごとを{見分|みわ}けることができると{語|かた}られます。", "order": 301}, {"id": "L_he5", "q": "ヘブル{人|じん}への{手紙|てがみ}7{章|しょう}で、キリストがその{位|くらい}に{等|ひと}しい{大祭司|だいさいし}とされる、アブラハムを{祝福|しゅくふく}した{王|おう}は?", "answer": "メルキゼデク", "wrong": ["アビメレク", "ネブカドネツァル", "ヒラム"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ヘブル人への手紙", "ref": "ヘブル{人|じん}への{手紙|てがみ} 7{章|しょう}", "note": "メルキゼデクは「{義|ぎ}の{王|おう}」「{平和|へいわ}の{王|おう}」という{意味|いみ}の{名前|なまえ}だと{説明|せつめい}されます。", "order": 302}, {"id": "L_he6", "q": "ヘブル{人|じん}への{手紙|てがみ}12{章|しょう}で、{私|わたし}たちを{取|と}り{巻|かん}く{多|おお}くの{証人|しょうにん}は{何|なに}のようだと{言|い}われている?", "answer": "{雲|くも}", "wrong": ["{星|ほし}", "{砂|すな}", "{海|うみ}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ヘブル人への手紙", "ref": "ヘブル{人|じん}への{手紙|てがみ} 12{章|しょう}", "note": "だから{重荷|おもに}を{捨|す}てて、{忍耐|にんたい}をもって{走|はし}り{続|つづ}けようと{勧|すす}められます。", "order": 303}, {"id": "L_ja1", "q": "ヤコブの{手紙|てがみ}2{章|しょう}で、{行|おこな}いのない{信仰|しんこう}はどうだと{言|い}われている?", "answer": "{死|し}んだもの", "wrong": ["{完|かん}{全|ぜん}なもの", "{若|わか}いもの", "{隠|かく}れたもの"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ヤコブの手紙", "ref": "ヤコブの{手紙|てがみ} 2{章|しょう}", "note": "{信仰|しんこう}は{行|おこな}いとともに{働|はたら}くものだと{語|かた}られます。", "order": 304}, {"id": "L_ja2", "q": "ヤコブの{手紙|てがみ}3{章|しょう}で、{小|ちい}さいのに{大|おお}きなことを{言|い}い、{火|ひ}にたとえられている{体|からだ}の{部分|ぶぶん}は?", "answer": "{舌|した}", "wrong": ["{手|て}", "{目|め}", "{足|あし}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ヤコブの手紙", "ref": "ヤコブの{手紙|てがみ} 3{章|しょう}", "note": "{小|ちい}さな{火|ひ}が{大|おお}きな{森|もり}を{燃|も}やすように、ことばには{大|おお}きな{力|ちから}があると{語|かた}られます。", "order": 305}, {"id": "L_ja3", "q": "ヤコブの{手紙|てがみ}1{章|しょう}で、{人|ひと}は{聞|き}くのに{早|はや}く、{語|かた}るのに{遅|おそ}く、そして{何|なに}に{遅|おそ}くあるべきだと{言|い}われている?", "answer": "{怒|おこ}ること", "wrong": ["{食|た}べること", "{眠|ねむ}ること", "{働|はたら}くこと"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ヤコブの手紙", "ref": "ヤコブの{手紙|てがみ} 1{章|しょう}", "note": "{人|ひと}の{怒|いか}りは{神|かみ}の{義|ぎ}を{実|み}{現|あらわ}しないと{続|つづ}きます。", "order": 306}, {"id": "L_ja4", "q": "ヤコブの{手紙|てがみ}1{章|しょう}で、{知恵|ちえ}に{欠|か}けている{人|ひと}はどうすればよいと{言|い}われている?", "answer": "{神|かみ}に{求|もと}める", "wrong": ["{本|ほん}をたくさん{読|よ}む", "{長老|ちょうろう}に{任|まか}せる", "{黙|だま}っている"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ヤコブの手紙", "ref": "ヤコブの{手紙|てがみ} 1{章|しょう}", "note": "{神|かみ}はだれにでも{惜|お}しみなく、とがめることなく{与|あた}えてくださると{語|かた}られます。", "order": 307}, {"id": "L_p11", "q": "ペテロの{手紙|てがみ}{第|だい}{一|いち}5{章|しょう}で、{悪魔|あくま}は{何|なに}にたとえられている?", "answer": "ほえたける{獅子|しし}", "wrong": ["{蛇|へび}", "{狼|おおかみ}", "{竜|りゅう}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ペテロの手紙第一", "ref": "ペテロの{手紙|てがみ}{第|だい}{一|いち} 5{章|しょう}", "note": "{食|く}い{尽|つ}くすべきものを{探|さが}し{回|まわ}っているので、{身|み}を{慎|つつし}み{目|め}を{覚|さ}ましていなさいと{勧|すす}められます。", "order": 308}, {"id": "L_p12", "q": "ペテロの{手紙|てがみ}{第|だい}{一|いち}5{章|しょう}で、{思|おも}い{煩|わずら}いはどうするよう{勧|すす}められている?", "answer": "いっさいを{神|かみ}にゆだねる", "wrong": ["{友|とも}だちに{打|う}ち{明|あ}ける", "{忘|わす}れるまで{待|ま}つ", "{紙|かみ}に{書|か}いて{捨|す}てる"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ペテロの手紙第一", "ref": "ペテロの{手紙|てがみ}{第|だい}{一|いち} 5{章|しょう}", "note": "{神|かみ}があなたがたのことを{心配|しんぱい}してくださるからだと{語|かた}られます。", "order": 309}, {"id": "L_p13", "q": "ペテロの{手紙|てがみ}{第|だい}{一|いち}2{章|しょう}で、{信|しん}じる{人々|ひとびと}は{何|なに}と{呼|よ}ばれている?", "answer": "{選|えら}ばれた{種族|しゅぞく}、{王|おう}である{祭司|さいし}", "wrong": ["{異邦|いほう}の{民|たみ}", "{律法|りっぽう}の{民|たみ}", "{天|てん}の{軍勢|ぐんぜい}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ペテロの手紙第一", "ref": "ペテロの{手紙|てがみ}{第|だい}{一|いち} 2{章|しょう}", "note": "{闇|やみ}の{中|なか}から{驚|おどろ}くべき{光|ひかり}の{中|なか}に{召|め}してくださった{方|かた}を{告|つ}げ{知|し}らせるためだと{語|かた}られます。", "order": 310}, {"id": "L_p14", "q": "ペテロの{手紙|てがみ}{第|だい}{一|いち}は、どんな{人々|ひとびと}を{励|はげ}ますために{書|か}かれた?", "answer": "{苦|くる}しみや{迫害|はくがい}の{中|なか}にある{信者|しんじゃ}たち", "wrong": ["{豊|ゆた}かに{暮|く}らす{王族|おうぞく}", "{異教|いきょう}の{祭司|さいし}たち", "エルサレムの{神殿|しんでん}で{働|はたら}く{人々|ひとびと}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ペテロの手紙第一", "ref": "ペテロの{手紙|てがみ}{第|だい}{一|いち} 1〜5{章|しょう}", "note": "{試練|しれん}の{中|なか}でも、{生|い}ける{望|のぞ}みがあることを{語|かた}っています。", "order": 311}, {"id": "L_p21", "q": "ペテロの{手紙|てがみ}{第|だい}{二|に}3{章|しょう}で、{主|しゅ}の{前|まえ}では{一日|いちにち}は{何|なに}{年|ねん}のようだと{言|い}われている?", "answer": "{千年|せんねん}", "wrong": ["{百|ひゃく}{年|ねん}", "{十|じゅう}{年|ねん}", "{一万|いちまん}{年|ねん}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ペテロの手紙第二", "ref": "ペテロの{手紙|てがみ}{第|だい}{二|に} 3{章|しょう}", "note": "そして{千年|せんねん}は{一日|いちにち}のようです、と{続|つづ}きます。", "order": 312}, {"id": "L_p22", "q": "ペテロの{手紙|てがみ}{第|だい}{二|に}3{章|しょう}で、{主|しゅ}の{約束|やくそく}が{遅|おく}れているように{見|み}えるのはなぜだと{言|い}われている?", "answer": "{一人|ひとり}も{滅|ほろ}びることなく、{皆|みな}が{悔|く}い{改|あらた}めることを{望|のぞ}んでおられるから", "wrong": ["{約束|やくそく}を{忘|わす}れておられるから", "{天|てん}の{準備|じゅんび}が{終|お}わっていないから", "{人|ひと}が{十分|じゅうぶん}に{働|はたら}いていないから"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ペテロの手紙第二", "ref": "ペテロの{手紙|てがみ}{第|だい}{二|に} 3{章|しょう}", "note": "{主|しゅ}は、{私|わたし}たちに{対|たい}して{忍耐|にんたい}しておられるのだと{語|かた}られます。", "order": 313}, {"id": "L_p23", "q": "ペテロの{手紙|てがみ}{第|だい}{二|に}2{章|しょう}で、{特|とく}に{警告|けいこく}されているのは?", "answer": "{偽教師|にせきょうし}たち", "wrong": ["{戦争|せんそう}", "ききん", "ローマの{皇帝|こうてい}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ペテロの手紙第二", "ref": "ペテロの{手紙|てがみ}{第|だい}{二|に} 2{章|しょう}", "note": "{偽教師|にせきょうし}たちがひそかに{滅|ほろ}びをもたらす{教|おし}えを{持|も}ち{込|こ}むと{警告|けいこく}されます。", "order": 314}, {"id": "L_j11", "q": "ヨハネの てがみ{第|だい}{一|いち}で、かみさまは なんだと いわれている?", "answer": "{愛|あい}", "wrong": ["お{金|きん}", "いかり", "かぜ"], "cat": "新約", "theme": "書簡", "level": 1, "book": "ヨハネの手紙第一", "ref": "ヨハネの{手紙|てがみ}{第|だい}{一|いち} 4{章|しょう}", "note": "{愛|あい}のない{者|もの}は{神|かみ}を{知|し}りません、{神|かみ}は{愛|あい}だからです、と{語|かた}られます。", "order": 315}, {"id": "L_j12", "q": "ヨハネの{手紙|てがみ}{第|だい}{一|いち}1{章|しょう}で、{私|わたし}たちが{罪|つみ}を{告白|こくはく}するなら、{神|かみ}はどうしてくださる?", "answer": "{罪|つみ}を{赦|ゆる}し、すべての{不|ふ}{義|ぎ}からきよめてくださる", "wrong": ["{罰|ばつ}をくださる", "{罪|つみ}を{忘|わす}れたふりをされる", "{何|なに}もなさらない"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ヨハネの手紙第一", "ref": "ヨハネの{手紙|てがみ}{第|だい}{一|いち} 1{章|しょう}", "note": "{神|かみ}は{真実|しんじつ}で{正|ただ}しい{方|かた}だからだと{語|かた}られます。", "order": 316}, {"id": "L_j13", "q": "ヨハネの{手紙|てがみ}{第|だい}{一|いち}4{章|しょう}で、{愛|あい}には{何|なに}がないと{言|い}われている?", "answer": "{恐|おそ}れ", "wrong": ["{喜|よろこ}び", "{希望|きぼう}", "{平和|へいわ}"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ヨハネの手紙第一", "ref": "ヨハネの{手紙|てがみ}{第|だい}{一|いち} 4{章|しょう}", "note": "{全|まった}き{愛|あい}は{恐|おそ}れを{締|し}め{出|だ}すと{続|つづ}きます。", "order": 317}, {"id": "L_j14", "q": "ヨハネの{手紙|てがみ}{第|だい}{一|いち}1{章|しょう}で、{神|かみ}は{何|なに}であって、{神|かみ}には{闇|やみ}が{少|すこ}しもないと{言|い}われている?", "answer": "{光|ひかり}", "wrong": ["{火|ひ}", "{風|かぜ}", "{水|みず}"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ヨハネの手紙第一", "ref": "ヨハネの{手紙|てがみ}{第|だい}{一|いち} 1{章|しょう}", "note": "だから{私|わたし}たちも{光|ひかり}の{中|なか}を{歩|あゆ}むよう{勧|すす}められます。", "order": 318}, {"id": "L_j21", "q": "ヨハネの{手紙|てがみ}{第|だい}{二|に}が{宛|あ}てられているのは?", "answer": "{選|えら}ばれた{女性|じょせい}とその{子|こ}どもたち", "wrong": ["ガイオ", "テモテ", "ピレモン"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ヨハネの手紙第二", "ref": "ヨハネの{手紙|てがみ}{第|だい}{二|に} 1{章|しょう}", "note": "{教会|きょうかい}とその{人々|ひとびと}を{指|さ}しているとも{考|かんが}えられています。", "order": 319}, {"id": "L_j22", "q": "ヨハネの{手紙|てがみ}{第|だい}{二|に}で、{改|あらた}めて{勧|すす}められている{初|はじ}めからの{命令|めいれい}は?", "answer": "{互|たが}いに{愛|あい}し{合|あ}うこと", "wrong": ["{断食|だんじき}をすること", "{献|ささ}{金|きん}をすること", "{割礼|かつれい}を{受|う}けること"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ヨハネの手紙第二", "ref": "ヨハネの{手紙|てがみ}{第|だい}{二|に} 1{章|しょう}", "note": "{愛|あい}とは、{父|ちち}なる{神|かみ}の{命令|めいれい}にしたがって{歩|あゆ}むことだと{語|かた}られます。", "order": 320}, {"id": "L_j31", "q": "ヨハネの{手紙|てがみ}{第|だい}{三|さん}が{宛|あ}てられている{人物|じんぶつ}は?", "answer": "ガイオ", "wrong": ["テモテ", "テトス", "オネシモ"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ヨハネの手紙第三", "ref": "ヨハネの{手紙|てがみ}{第|だい}{三|さん} 1{章|しょう}", "note": "{旅|たび}をする{兄弟|きょうだい}たちを{真心|まごころ}からもてなしたことがほめられています。", "order": 321}, {"id": "L_j32", "q": "ヨハネの{手紙|てがみ}{第|だい}{三|さん}で、かしらになりたがり、{兄弟|きょうだい}たちを{受|う}け{入|い}れないと{書|か}かれている{人物|じんぶつ}は?", "answer": "ディオテレペス", "wrong": ["デメテリオ", "ガイオ", "ディオヌシオ"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ヨハネの手紙第三", "ref": "ヨハネの{手紙|てがみ}{第|だい}{三|さん} 1{章|しょう}", "note": "{反対|はんたい}にデメテリオは、{皆|みな}から{良|よ}い{証|あか}しを{受|う}けている{人|ひと}として{紹介|しょうかい}されます。", "order": 322}, {"id": "L_ju1", "q": "ユダの{手紙|てがみ}を{書|か}いたユダは、{誰|だれ}の{兄弟|きょうだい}だと{名乗|なの}っている?", "answer": "ヤコブ", "wrong": ["ペテロ", "パウロ", "ヨハネ"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ユダの手紙", "ref": "ユダの{手紙|てがみ} 1{章|しょう}", "note": "イスカリオテのユダとは{別|べつ}の{人物|じんぶつ}です。", "order": 323}, {"id": "L_ju2", "q": "ユダの{手紙|てがみ}で、{悪魔|あくま}と{論|ろん}じ{合|あ}ったと{記|しる}されている{御使|みつか}いのかしらは?", "answer": "ミカエル", "wrong": ["ガブリエル", "ラファエル", "ウリエル"], "cat": "新約", "theme": "書簡", "level": 3, "book": "ユダの手紙", "ref": "ユダの{手紙|てがみ} 1{章|しょう}", "note": "ミカエルは{自分|じぶん}でさばかず、{主|しゅ}があなたを{戒|いまし}めてくださるようにと{言|い}いました。", "order": 324}, {"id": "L_ju3", "q": "ユダの{手紙|てがみ}で、{信者|しんじゃ}たちに{勧|すす}められていることは?", "answer": "{伝|つた}えられた{信仰|しんこう}のために{戦|たたか}うこと", "wrong": ["{新|あたら}しい{教|おし}えを{探|さが}すこと", "{律法|りっぽう}をすべて{守|まも}ること", "{人前|ひとまえ}で{語|かた}らないこと"], "cat": "新約", "theme": "書簡", "level": 2, "book": "ユダの手紙", "ref": "ユダの{手紙|てがみ} 1{章|しょう}", "note": "{聖徒|せいと}たちにひとたび{伝|つた}えられた{信仰|しんこう}のために{戦|たたか}うよう{勧|すす}められます。", "order": 325}]</script>
+<script id="app">const TPL = {
+  style: document.getElementById("appStyle").textContent,
+  main: document.querySelector("main").outerHTML,
+  app: document.getElementById("app").textContent
+};
+const TIME = 20000, ROUND = 10;
+const SHAPES = ["●","▲","■","◆"];
+const LS_KEY = "bible-quiz-progress-v1", RUBY_KEY = "bible-quiz-ruby";
+const LEVEL_NAME = { 1:"かんたん", 2:"ふつう", 3:"むずかしい" };
+const CAT_NAME = { "旧約":"{旧約|きゅうやく}", "新約":"{新約|しんやく}", "共通":"{共通|きょうつう}" };
+const THEME_KEY = { "人物":"people", "たとえ話":"parable", "できごと":"events", "基本":"basics", "書簡":"letters" };
+const BOOKS = ["ローマ人への手紙", "コリント人への手紙第一", "コリント人への手紙第二", "ガラテヤ人への手紙", "エペソ人への手紙", "ピリピ人への手紙", "コロサイ人への手紙", "テサロニケ人への手紙第一", "テサロニケ人への手紙第二", "テモテへの手紙第一", "テモテへの手紙第二", "テトスへの手紙", "ピレモンへの手紙", "ヘブル人への手紙", "ヤコブの手紙", "ペテロの手紙第一", "ペテロの手紙第二", "ヨハネの手紙第一", "ヨハネの手紙第二", "ヨハネの手紙第三", "ユダの手紙"];
+const PAUL = BOOKS.slice(0,13), GENERAL = BOOKS.slice(13);
+const OT_BOOKS = ["創世記", "出エジプト記", "レビ記", "民数記", "申命記", "ヨシュア記", "士師記", "ルツ記", "サムエル記第一", "サムエル記第二", "列王記第一", "列王記第二", "歴代誌第一", "歴代誌第二", "エズラ記", "ネヘミヤ記", "エステル記", "ヨブ記", "詩篇", "箴言", "伝道者の書", "雅歌", "イザヤ書", "エレミヤ書", "哀歌", "エゼキエル書", "ダニエル書", "ホセア書", "ヨエル書", "アモス書", "オバデヤ書", "ヨナ書", "ミカ書", "ナホム書", "ハバクク書", "ゼパニヤ書", "ハガイ書", "ゼカリヤ書", "マラキ書"];
+const MINOR = OT_BOOKS.slice(27);
+const $ = s => document.querySelector(s);
+const screens = { start:$("#start"), play:$("#play"), result:$("#result"), manage:$("#manage"), edit:$("#edit"), titles:$("#titles"), board:$("#board") };
+function show(name){ for (const k in screens) screens[k].hidden = (k !== name); window.scrollTo(0,0); }
+function shuffle(a){ a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function R(s){ return esc(s).replace(/\{([^{}|]+)\|([^{}]+)\}/g, "<ruby>$1<rt>$2</rt></ruby>"); }
+function setR(el, s){ el.innerHTML = R(s); }
+function plain(s){ return String(s).replace(/\{([^{}|]+)\|([^{}]+)\}/g, "$1"); }
+
+let questions = [];
+try { questions = JSON.parse(document.getElementById("qdata").textContent) || []; } catch(e){ questions = []; }
+questions.sort((a,b) => (a.order||0) - (b.order||0));
+
+let progress = { best:0, missed:[], plays:0, totalCorrect:0, correctIds:[], titles:[], flags:[], calmPlays:0, reviewCorrect:0, lastDay:"", dayStreak:0 };
+try {
+  const s = localStorage.getItem(LS_KEY);
+  if (s){
+    const d = JSON.parse(s), arr = x => Array.isArray(x) ? x : [];
+    progress = { best:d.best||0, missed:arr(d.missed), plays:d.plays||0, totalCorrect:d.totalCorrect||0,
+      correctIds:arr(d.correctIds), titles:arr(d.titles), calmPlays:d.calmPlays||0, reviewCorrect:d.reviewCorrect||0, lastDay:d.lastDay||"", dayStreak:d.dayStreak||0,
+      flags:arr(d.flags).map(f => { const m = /^perfect_(.+)$/.exec(f); return m && THEME_KEY[m[1]] ? "perfect_" + THEME_KEY[m[1]] : f; }) };
+  }
+} catch(e){}
+function saveProgress(){ try { localStorage.setItem(LS_KEY, JSON.stringify(progress)); } catch(e){} }
+
+/* ---------- ふりがな ---------- */
+let ruby = "on";
+try { ruby = localStorage.getItem(RUBY_KEY) || "on"; } catch(e){}
+function applyRuby(){
+  document.body.classList.toggle("noruby", ruby === "off");
+  $("#rubySeg").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.ruby === ruby)));
+}
+
+/* ---------- {称号|しょうごう} ---------- */
+const RANKS = [
+  { id:"r1", n:10,  name:"{見習|みなら}い{羊飼|ひつじか}い",   ico:"🐑" },
+  { id:"r2", n:30,  name:"{人間|にんげん}をとる{漁師|りょうし}", ico:"🐟" },
+  { id:"r3", n:60,  name:"{弟子|でし}",           ico:"👣" },
+  { id:"r4", n:100, name:"{預言者|よげんしゃ}",         ico:"📜" },
+  { id:"r5", n:200, name:"{使徒|しと}",           ico:"🕊️" },
+  { id:"r6", n:365, name:"{聖書|せいしょ}{博士|はかせ}",       ico:"🎓" },
+  { id:"r7", n:500, name:"{長老|ちょうろう}",           ico:"🏛️" },
+  { id:"r8", n:1000, name:"{信仰|しんこう}の{勇者|ゆうしゃ}",    ico:"🛡️" }
+];
+const SPECIALS = [
+  { id:"first",   name:"はじめの{一歩|いっぽ}",       ico:"🌱", desc:"はじめてクイズに{挑戦|ちょうせん}する", test:s => s.plays >= 1 },
+  { id:"five",    name:"{五|いつ}つのパン",         ico:"🍞", desc:"1{回|かい}のゲームで5{問|もん}{連続|れんぞく}{正解|せいかい}する", test:s => s.flags.includes("streak5") },
+  { id:"ten",     name:"{十戒|じっかい}",               ico:"🪨", desc:"1{回|かい}のゲームで10{問|もん}{連続|れんぞく}{正解|せいかい}する", test:s => s.flags.includes("streak10") },
+  { id:"david",   name:"ダビデの{石|いし}{投|な}げ",     ico:"🎯", desc:"「かんたん」で{全|ぜん}{問|もん}{正解|せいかい}する", test:s => s.flags.includes("perfect1") },
+  { id:"normal",  name:"{良|よ}い{牧者|ぼくしゃ}",           ico:"🧑‍🌾", desc:"「ふつう」で{全|ぜん}{問|もん}{正解|せいかい}する", test:s => s.flags.includes("perfect2") },
+  { id:"solomon", name:"ソロモンの{知恵|ちえ}",     ico:"👑", desc:"「むずかしい」で{全|ぜん}{問|もん}{正解|せいかい}する", test:s => s.flags.includes("perfect3") },
+  { id:"people",  name:"{人物|じんぶつ}{博士|はかせ}",           ico:"🧑‍🤝‍🧑", desc:"テーマ「{人物|じんぶつ}」で{全|ぜん}{問|もん}{正解|せいかい}する", test:s => s.flags.includes("perfect_people") },
+  { id:"parable", name:"たとえ{話|ばなし}の{名人|めいじん}",     ico:"🌾", desc:"テーマ「たとえ{話|ばなし}」で{全|ぜん}{問|もん}{正解|せいかい}する", test:s => s.flags.includes("perfect_parable") },
+  { id:"events",  name:"{歴史|れきし}の{語|かた}り{部|べ}",       ico:"🏺", desc:"テーマ「できごと」で{全|ぜん}{問|もん}{正解|せいかい}する", test:s => s.flags.includes("perfect_events") },
+  { id:"basics",  name:"みことばの{道|みち}しるべ", ico:"🧭", desc:"テーマ「{聖書|せいしょ}の{基本|きほん}」で{全|ぜん}{問|もん}{正解|せいかい}する", test:s => s.flags.includes("perfect_basics") },
+  { id:"return",  name:"{立|た}ち{返|かえ}る{人|ひと}",         ico:"🏠", desc:"{復習|ふくしゅう}ですべての{問題|もんだい}に{正解|せいかい}する", test:s => s.flags.includes("reviewDone") },
+  { id:"job",     name:"{忍耐|にんたい}の{人|ひと}ヨブ",       ico:"⏳", desc:"10{回|かい}プレイする", test:s => s.plays >= 10 },
+  { id:"wild",    name:"{荒野|こうや}の40{年|ねん}",         ico:"🏜️", desc:"40{回|かい}プレイする", test:s => s.plays >= 40 },
+  { id:"all",     name:"{全|ぜん}{巻|かん}{読破|どくは}",           ico:"📚", desc:"すべての{問題|もんだい}に{一|いち}{度|ど}は{正解|せいかい}する", test:s => questions.length > 0 && questions.every(q => s.correctIds.includes(q.id)) },
+  { id:"letters", name:"{書簡|しょかん}の{同労者|どうろうしゃ}",       ico:"✉️", desc:"テーマ「{手紙|てがみ}」で{全|ぜん}{問|もん}{正解|せいかい}する", test:s => s.flags.includes("perfect_letters") },
+  { id:"tour",    name:"{諸教|しょきょう}{会|かい}への{旅|たび}",       ico:"🗺️", desc:"21の{手紙|てがみ}すべてで、1{問|もん}{以上|いじょう}{正解|せいかい}する", test:s => BOOKS.every(b => questions.some(q => q.book === b && s.correctIds.includes(q.id))) },
+  { id:"paul",    name:"パウロの{弟子|でし}",       ico:"🖋️", desc:"パウロの{手紙|てがみ}(ローマ{人|じん}への{手紙|てがみ}〜ピレモンへの{手紙|てがみ})の{問題|もんだい}すべてに{一|いち}{度|ど}は{正解|せいかい}する", test:s => allCorrect(s, q => PAUL.includes(q.book)) },
+  { id:"general", name:"{公|こう}{同|どう}{書簡|しょかん}の{学|まな}び{手|て}",   ico:"🕯️", desc:"ヘブル{人|じん}への{手紙|てがみ}〜ユダの{手紙|てがみ}の{問題|もんだい}すべてに{一|いち}{度|ど}は{正解|せいかい}する", test:s => allCorrect(s, q => GENERAL.includes(q.book)) },
+  { id:"ot",      name:"{旧約|きゅうやく}の{旅人|たびびと}",         ico:"🐪", desc:"{旧約|きゅうやく}{聖書|せいしょ}の{問題|もんだい}すべてに{一|いち}{度|ど}は{正解|せいかい}する", test:s => allCorrect(s, q => q.cat === "旧約") },
+  { id:"nt",      name:"{新約|しんやく}の{証人|しょうにん}",         ico:"✝️", desc:"{新約|しんやく}{聖書|せいしょ}の{問題|もんだい}すべてに{一|いち}{度|ど}は{正解|せいかい}する", test:s => allCorrect(s, q => q.cat === "新約") },
+  { id:"mix",     name:"{多|おお}くの{賜物|たまもの}",         ico:"🎁", desc:"「ミックス」で{全|ぜん}{問|もん}{正解|せいかい}する", test:s => s.flags.includes("perfect_mix") },
+  { id:"timed",   name:"{時|とき}を{見分|みわ}ける{人|ひと}",     ico:"⏱️", desc:"「1{問|もん}20{秒|びょう}」で{全|ぜん}{問|もん}{正解|せいかい}する", test:s => s.flags.includes("perfect_timed") },
+  { id:"calm",    name:"{静|しず}まりの{人|ひと}",         ico:"🌿", desc:"「{時間|じかん}{制限|せいげん}なし」で10{回|かい}プレイする", test:s => s.calmPlays >= 10 },
+  { id:"lost",    name:"{迷|めい}{子|こ}の{羊|ひつじ}を{探|さが}す{人|ひと}",   ico:"🐏", desc:"{復習|ふくしゅう}で{累計|るいけい}30{問|もん}{正解|せいかい}する", test:s => s.reviewCorrect >= 30 },
+  { id:"manna",   name:"{日|ひ}ごとのマナ",       ico:"☀️", desc:"3{日|ひ}{続|つづ}けてプレイする", test:s => s.dayStreak >= 3 },
+  { id:"sabbath", name:"{七日目|なのかめ}の{安息|あんそく}",       ico:"🌙", desc:"7{日|ひ}{続|つづ}けてプレイする", test:s => s.dayStreak >= 7 },
+  { id:"pilgrim", name:"{約束|やくそく}の{地|ち}への{巡礼|じゅんれい}",   ico:"⛰️", desc:"{旧約|きゅうやく}{聖書|せいしょ}39の{書|しょ}すべてで、1{問|もん}{以上|いじょう}{正解|せいかい}する", test:s => OT_BOOKS.every(b => questions.some(q => q.book === b && s.correctIds.includes(q.id))) },
+  { id:"minor",   name:"{十|じゅう}{二|に}{小|しょう}{預言|よげん}{書|しょ}の{友|とも}",   ico:"📯", desc:"ホセア{書|しょ}〜マラキ{書|しょ}の{問題|もんだい}すべてに{一|いち}{度|ど}は{正解|せいかい}する", test:s => allCorrect(s, q => MINOR.includes(q.book)) },
+  { id:"dawn",    name:"{夜明|よあ}けの{祈|いの}り",       ico:"🌄", desc:"{朝|あさ}5{時|とき}から8{時|とき}の{間|ま}にプレイする", test:s => s.flags.includes("dawn") }
+];
+function allCorrect(s, f){ const list = questions.filter(f); return list.length > 0 && list.every(q => s.correctIds.includes(q.id)); }
+const ALL_TITLES = [
+  ...RANKS.map(r => ({ id:r.id, name:r.name, ico:r.ico, desc:`{累計|るいけい}${r.n}{問|もん}{正解|せいかい}する`, test:s => s.totalCorrect >= r.n })),
+  ...SPECIALS
+];
+function checkTitles(){
+  const got = [];
+  ALL_TITLES.forEach(t => { if (!progress.titles.includes(t.id) && t.test(progress)){ progress.titles.push(t.id); got.push(t); } });
+  return got;
+}
+function currentRank(){ let r = null; RANKS.forEach(x => { if (progress.totalCorrect >= x.n) r = x; }); return r; }
+function updateTitleCard(){
+  const r = currentRank(), next = RANKS.find(x => progress.totalCorrect < x.n);
+  setR($("#tName"), r ? `${r.ico} ${r.name}` : "まだありません");
+  if (next){
+    const prev = r ? r.n : 0;
+    setR($("#tNext"), `「${next.name}」まで、あと${next.n - progress.totalCorrect}{問|もん}{正解|せいかい}({累計|るいけい}${progress.totalCorrect}{問|もん})`);
+    $("#tMeter").style.width = Math.round((progress.totalCorrect - prev) / (next.n - prev) * 100) + "%";
+  } else {
+    setR($("#tNext"), `{最高|さいこう}の{称号|しょうごう}です。{累計|るいけい}${progress.totalCorrect}{問|もん}{正解|せいかい}`);
+    $("#tMeter").style.width = "100%";
+  }
+  setR($("#titlesBtn"), `{称号|しょうごう}の{一覧|いちらん}を{見|み}る(${progress.titles.length} / ${ALL_TITLES.length})`);
+}
+function renderTitles(){
+  setR($("#tCount"), `${ALL_TITLES.length}{個|こ}のうち${progress.titles.length}{個|こ}を{手|て}に{入|い}れました。`);
+  const ul = $("#tList"); ul.innerHTML = "";
+  ALL_TITLES.forEach(t => {
+    const has = progress.titles.includes(t.id);
+    const li = document.createElement("li"); if (!has) li.className = "locked";
+    const i = document.createElement("span"); i.className = "ico"; i.textContent = has ? t.ico : "?";
+    const box = document.createElement("span");
+    const a = document.createElement("span"); a.className = "tt"; setR(a, t.name);
+    const b = document.createElement("span"); b.className = "td"; setR(b, (has ? "{獲得|かくとく}{済|ず}み:" : "{条件|じょうけん}:") + t.desc);
+    box.append(a, b); li.append(i, box); ul.appendChild(li);
+  });
+}
+
+let level="2", theme="all", cat="all", mode="timed", book="all";
+let deck=[], idx=0, score=0, streak=0, maxStreak=0, timerId=null, deadline=0, locked=false, results=[], reviewing=false, kids=false;
+let gameLevel="2", gameTheme="all", gameMode="timed";
+let artifactNS=null, canEditQ=false, editingId=null, delArmed=false, busy=false;
+
+/* ---------- start ---------- */
+function bookMode(){ return theme === "書簡" ? "nt" : (cat === "旧約" ? "ot" : null); }
+let bookModeNow = null;
+function refreshBookField(){
+  const bm = bookMode();
+  $("#bookField").hidden = !bm;
+  if (bm === bookModeNow) return;
+  bookModeNow = bm; book = "all";
+  if (!bm) return;
+  const sel = $("#bookSel"); sel.innerHTML = "";
+  const list = bm === "nt" ? BOOKS : OT_BOOKS;
+  const first = document.createElement("option"); first.value = "all";
+  first.textContent = plain(bm === "nt" ? "すべての{手紙|てがみ}" : "{旧約|きゅうやく}{聖書|せいしょ}のすべての{書|しょ}"); sel.appendChild(first);
+  list.forEach(b => { const o = document.createElement("option"); o.value = b; o.textContent = b; sel.appendChild(o); });
+  setR($("#bookLabel"), bm === "nt" ? "{手紙|てがみ}を{選|えら}ぶ" : "{旧約|きゅうやく}{聖書|せいしょ}の{書|しょ}を{選|えら}ぶ");
+}
+function pool(){
+  if (book !== "all" && bookMode()) return questions.filter(q => q.book === book);
+  return questions.filter(q =>
+    (level === "mix" || String(q.level) === level) &&
+    (theme === "all" || q.theme === theme) &&
+    (cat === "all" || q.cat === cat || q.cat === "共通"));
+}
+function missedAvailable(){ return progress.missed.filter(id => questions.some(q => q.id === id)); }
+function updateStart(){
+  const n = pool().length, sb = $("#startBtn");
+  sb.disabled = n === 0;
+  setR(sb, n === 0 ? "この{組|く}み{合|あ}わせの{問題|もんだい}はまだありません" : `スタート(${Math.min(ROUND,n)}{問|もん})`);
+  const m = missedAvailable().length;
+  $("#reviewBtn").hidden = m === 0;
+  setR($("#reviewBtn"), `まちがえた{問題|もんだい}を{復習|ふくしゅう}(${m}{問|もん})`);
+  setR($("#statusLine"), progress.plays > 0 ? `これまでの{最高|さいこう}{記録|きろく}は${progress.best}{問|もん}{正解|せいかい}、${progress.plays}{回|かい}プレイしました。` : `{全|ぜん}${questions.length}{問|もん}からランダムに{出題|しゅつだい}します。`);
+  $("#manageBtn").hidden = !canEditQ;
+  updateTitleCard();
+}
+function bindSeg(id, attr, set){
+  $(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    $(id).querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    set(b.dataset[attr]); updateStart();
+  });
+}
+bindSeg("#levelSeg", "level", v => level = v);
+bindSeg("#themeSeg", "theme", v => { theme = v; refreshBookField(); });
+$("#bookSel").addEventListener("change", e => { book = e.target.value; updateStart(); });
+bindSeg("#catSeg", "cat", v => { cat = v; refreshBookField(); });
+bindSeg("#modeSeg", "mode", v => mode = v);
+bindSeg("#rubySeg", "ruby", v => { ruby = v; try { localStorage.setItem(RUBY_KEY, v); } catch(e){} applyRuby(); });
+
+/* ---------- game ---------- */
+function startGame(list, isReview){
+  reviewing = isReview;
+  kids = !isReview && level === "1";
+  gameLevel = level; gameTheme = theme; gameMode = mode;
+  document.body.classList.toggle("kids", kids);
+  deck = shuffle(list).slice(0, ROUND).map(q => ({ ...q, opts: shuffle([q.answer, ...(q.wrong||[])]), right: q.answer }));
+  idx=0; score=0; streak=0; maxStreak=0; results=[];
+  show("play"); render();
+}
+function scoreText(){ return kids ? `${score}もん せいかい` : `${score}{問|もん}{正解|せいかい}`; }
+function render(){
+  const q = deck[idx]; locked = false;
+  $("#count").textContent = `${idx+1} / ${deck.length}`;
+  setR($("#score"), scoreText());
+  setR($("#question"), q.q);
+  const box = $("#choices"); box.innerHTML = "";
+  q.opts.forEach((t,i) => {
+    const b = document.createElement("button");
+    b.className = "choice";
+    b.dataset.i = i;
+    b.style.setProperty("--c", `var(--c${i+1})`);
+    b.innerHTML = `<span class="mark" aria-hidden="true">${SHAPES[i]}</span><span class="txt"></span>`;
+    setR(b.querySelector(".txt"), t);
+    b.addEventListener("click", () => answer(i, b));
+    box.appendChild(b);
+  });
+  $("#feedback").hidden = true;
+  $("#timer").hidden = (mode !== "timed");
+  clearInterval(timerId);
+  if (mode === "timed") startTimer();
+}
+function startTimer(){ deadline = performance.now() + TIME; tick(); timerId = setInterval(tick, 100); }
+function tick(){
+  const left = Math.max(0, deadline - performance.now());
+  $("#bar").style.transform = `scaleX(${left/TIME})`;
+  $("#sec").textContent = Math.ceil(left/1000);
+  $("#timer").classList.toggle("hurry", left < 5000);
+  if (left <= 0) answer(-1, null);
+}
+function answer(i, btn){
+  if (locked) return;
+  locked = true; clearInterval(timerId);
+  const q = deck[idx];
+  const ok = i >= 0 && q.opts[i] === q.right;
+  if (ok){ score++; streak++; maxStreak = Math.max(maxStreak, streak); } else streak = 0;
+  results.push({ q, ok });
+  document.querySelectorAll(".choice").forEach(b => {
+    b.disabled = true;
+    const t = q.opts[Number(b.dataset.i)];
+    if (t === q.right) b.classList.add("right");
+    else if (b === btn) b.classList.add("wrong");
+    else b.classList.add("dim");
+  });
+  const fb = $("#feedback");
+  fb.className = "feedback " + (ok ? "ok" : "ng");
+  fb.hidden = false;
+  if (kids) setR($("#verdict"), ok ? (streak >= 3 ? `せいかい!${streak}もん れんぞく` : "せいかい!") : (i < 0 ? "じかんぎれ" : "ざんねん"));
+  else setR($("#verdict"), ok ? (streak >= 3 ? `{正解|せいかい}!${streak}{問|もん}{連続|れんぞく}` : "{正解|せいかい}!") : (i < 0 ? "{時間|じかん}{切|き}れ" : "ざんねん"));
+  setR($("#note"), ok ? (q.note || "") : `${kids ? "こたえ" : "{正解|せいかい}"}は「${q.right}」。${q.note || ""}`);
+  setR($("#ref"), q.ref ? `📖 ${q.ref}` : "");
+  $("#ref").hidden = !q.ref;
+  setR($("#score"), scoreText());
+  const last = idx+1 >= deck.length;
+  setR($("#next"), kids ? (last ? "けっかを みる" : "つぎの もんだい") : (last ? "{結果|けっか}を{見|み}る" : "{次|つぎ}の{問題|もんだい}へ"));
+  $("#next").focus({ preventScroll:true });
+  fb.scrollIntoView({ behavior:"smooth", block:"nearest" });
+}
+function finish(){
+  show("result");
+  const total = deck.length;
+  $("#finalScore").textContent = score;
+  $("#finalTotal").textContent = `/ ${total}`;
+  const r = score / total;
+  setR($("#resultMsg"), kids
+    ? (r === 1 ? "ぜんもん せいかい!すごい!" : r >= .7 ? "よく できました!" : r >= .4 ? "がんばったね!" : "せいしょを よんで、また ちょうせんしよう")
+    : (r === 1 ? "{全|ぜん}{問|もん}{正解|せいかい}です。すばらしい!" : r >= .7 ? "お{見事|みごと}!よく{学|まな}んでいますね" : r >= .4 ? "なかなかの{好|こう}{成績|せいせき}です" : "{聖書|せいしょ}を{読|よ}んで、また{挑戦|ちょうせん}してみましょう"));
+  const prevBest = progress.best;
+  const missed = new Set(progress.missed);
+  results.forEach(x => x.ok ? missed.delete(x.q.id) : missed.add(x.q.id));
+  const cids = new Set(progress.correctIds);
+  results.forEach(x => { if (x.ok) cids.add(x.q.id); });
+  const flags = new Set(progress.flags);
+  if (maxStreak >= 5) flags.add("streak5");
+  if (maxStreak >= 10) flags.add("streak10");
+  const perfect = score === total && total >= 5;
+  if (perfect && !reviewing){
+    if (gameLevel !== "mix") flags.add("perfect" + gameLevel);
+    if (gameTheme !== "all" && THEME_KEY[gameTheme]) flags.add("perfect_" + THEME_KEY[gameTheme]);
+  }
+  if (reviewing && missed.size === 0 && score === total) flags.add("reviewDone");
+  if (perfect && !reviewing && gameLevel === "mix") flags.add("perfect_mix");
+  if (perfect && gameMode === "timed") flags.add("perfect_timed");
+  const hr = new Date().getHours(); if (hr >= 5 && hr < 8) flags.add("dawn");
+  const dkey = dt => `${dt.getFullYear()}-${dt.getMonth()+1}-${dt.getDate()}`;
+  const today = dkey(new Date()), yest = dkey(new Date(Date.now() - 864e5));
+  const dayStreak = progress.lastDay === today ? progress.dayStreak : (progress.lastDay === yest ? progress.dayStreak + 1 : 1);
+  progress = { ...progress, best: reviewing ? prevBest : Math.max(prevBest, score), missed: [...missed],
+    plays: progress.plays + 1, totalCorrect: progress.totalCorrect + score, correctIds: [...cids], flags: [...flags],
+    calmPlays: progress.calmPlays + (gameMode === "calm" ? 1 : 0), reviewCorrect: progress.reviewCorrect + (reviewing ? score : 0),
+    lastDay: today, dayStreak };
+  const got = checkTitles();
+  saveProgress();
+  const nt = $("#newTitleItems"); nt.innerHTML = "";
+  got.forEach(t => {
+    const li = document.createElement("li");
+    li.innerHTML = R(`${t.ico} ${t.name}`) + "<small>" + R(t.desc) + "</small>";
+    nt.appendChild(li);
+  });
+  $("#newTitles").hidden = got.length === 0;
+  let sub = maxStreak >= 2 ? `{最大|さいだい}${maxStreak}{問|もん}{連続|れんぞく}で{正解|せいかい}しました。` : "";
+  if (!reviewing && score > prevBest && progress.plays > 1) sub += " {最高|さいこう}{記録|きろく}を{更新|こうしん}しました!";
+  if (reviewing && missed.size === 0) sub += " {復習|ふくしゅう}が{全部|ぜんぶ}{終|お}わりました。";
+  setR($("#resultSub"), sub.trim());
+  const wrong = results.filter(x => !x.ok);
+  const list = $("#readItems"); list.innerHTML = "";
+  wrong.forEach(x => {
+    const li = document.createElement("li");
+    const a = document.createElement("span"); a.className = "rq"; setR(a, x.q.q);
+    const b = document.createElement("span"); b.className = "ra";
+    setR(b, `{正解|せいかい}:${x.q.answer}` + (x.q.ref ? `(${x.q.ref})` : ""));
+    li.append(a, b); list.appendChild(li);
+  });
+  $("#readlist").hidden = wrong.length === 0;
+  updateStart();
+  boardAfterGame();
+}
+function reviewPool(){ const ids = new Set(missedAvailable()); return questions.filter(q => ids.has(q.id)); }
+$("#startBtn").addEventListener("click", () => startGame(pool(), false));
+$("#reviewBtn").addEventListener("click", () => startGame(reviewPool(), true));
+$("#next").addEventListener("click", () => { idx++; if (idx < deck.length) render(); else finish(); });
+$("#againBtn").addEventListener("click", () => {
+  if (reviewing){ const p = reviewPool(); if (p.length) startGame(p, true); else show("start"); }
+  else startGame(pool(), false);
+});
+$("#homeBtn").addEventListener("click", () => { show("start"); updateStart(); });
+$("#titlesBtn").addEventListener("click", () => { renderTitles(); show("titles"); });
+$("#titlesBack").addEventListener("click", () => { show("start"); updateStart(); });
+
+/* ---------- manage (editors only) ---------- */
+function buildDoc(list){
+  const json = JSON.stringify(list).replace(/</g, "\\u003c");
+  return "<!DOCTYPE html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n" +
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n" +
+    "<title>聖書クイズ</title>\n" +
+    "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n" +
+    "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n" +
+    "<link href=\"https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap\" rel=\"stylesheet\">\n" +
+    "<style id=\"appStyle\">" + TPL.style + "</style>\n</head>\n<body>\n" + TPL.main + "\n" +
+    "<script type=\"application/json\" id=\"qdata\">" + json + "<\/script>\n" +
+    "<script id=\"app\">" + TPL.app + "<\/script>\n</body>\n</html>\n";
+}
+async function publishList(list, msgEl){
+  if (!artifactNS || busy) return false;
+  busy = true; setR(msgEl, "{保存|ほぞん}しています…");
+  try { await artifactNS.publish(buildDoc(list)); setR(msgEl, "{保存|ほぞん}しました。"); return true; }
+  catch(e){
+    const c = e && e.code;
+    setR(msgEl, c === "conflict" ? "ほかの{人|ひと}が{同時|どうじ}に{更新|こうしん}しました。{最新|さいしん}の{状態|じょうたい}で、もう{一|いち}{度|ど}やり{直|なお}してください。"
+      : (c === "not_granted" || c === "not_writer") ? "{編集|へんしゅう}する{権限|けんげん}がありません。"
+      : "{保存|ほぞん}できませんでした。{時間|じかん}をおいてもう{一|いち}{度|ど}お{試|ため}しください。");
+    return false;
+  } finally { busy = false; }
+}
+function renderList(){
+  const c = k => questions.filter(q => String(q.level) === k).length;
+  setR($("#mcount"), `{全|ぜん}${questions.length}{問|もん}(かんたん${c("1")}{問|もん}、ふつう${c("2")}{問|もん}、むずかしい${c("3")}{問|もん})`);
+  const ul = $("#qlist"); ul.innerHTML = "";
+  questions.forEach(q => {
+    const li = document.createElement("li");
+    const b = document.createElement("button"); b.className = "qitem";
+    const tag = document.createElement("span");
+    tag.className = "tag" + (q.cat === "旧約" ? " ot" : q.cat === "共通" ? " cm" : "");
+    setR(tag, CAT_NAME[q.cat] || "—");
+    const lv = document.createElement("span"); lv.className = "lv"; lv.textContent = LEVEL_NAME[q.level] || "—";
+    const t = document.createElement("span"); t.className = "qt"; setR(t, q.q);
+    b.append(tag, lv, t);
+    b.addEventListener("click", () => openEdit(q.id));
+    li.appendChild(b); ul.appendChild(li);
+  });
+}
+function openEdit(id){
+  editingId = id; delArmed = false;
+  const q = id ? questions.find(x => x.id === id) : null;
+  setR($("#editTitle"), q ? "{問題|もんだい}を{編集|へんしゅう}" : "{新|あたら}しい{問題|もんだい}");
+  $("#fQ").value = q ? q.q : "";
+  $("#fA").value = q ? q.answer : "";
+  const w = q ? (q.wrong || []) : [];
+  $("#fW1").value = w[0] || ""; $("#fW2").value = w[1] || ""; $("#fW3").value = w[2] || "";
+  $("#fLevel").value = q ? String(q.level || 2) : (level === "mix" ? "2" : level);
+  $("#fTheme").value = q ? (q.theme || "できごと") : (theme === "all" ? "人物" : theme);
+  $("#fCat").value = q ? (q.cat || "旧約") : (cat === "新約" ? "新約" : "旧約");
+  $("#fBook").value = q ? (q.book || "") : (book !== "all" ? book : "");
+  $("#fRef").value = q ? (q.ref || "") : "";
+  $("#fNote").value = q ? (q.note || "") : "";
+  $("#editMsg").textContent = "";
+  $("#delBtn").hidden = !q; setR($("#delBtn"), "この{問題|もんだい}を{削除|さくじょ}");
+  show("edit"); $("#fQ").focus({ preventScroll:true });
+}
+(function fillBookEditor(){
+  const sel = $("#fBook");
+  const add = (v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; sel.appendChild(o); };
+  add("", plain("なし"));
+  OT_BOOKS.forEach(b => add(b, b)); BOOKS.forEach(b => add(b, b));
+})();
+$("#manageBtn").addEventListener("click", () => { renderList(); show("manage"); });
+$("#backBtn").addEventListener("click", () => { show("start"); updateStart(); });
+$("#newBtn").addEventListener("click", () => openEdit(null));
+$("#cancelBtn").addEventListener("click", () => { renderList(); show("manage"); });
+$("#saveBtn").addEventListener("click", async () => {
+  const v = id => $(id).value.trim(), msg = $("#editMsg");
+  const data = { q:v("#fQ"), answer:v("#fA"), wrong:[v("#fW1"),v("#fW2"),v("#fW3")],
+    level:Number($("#fLevel").value), theme:$("#fTheme").value, cat:$("#fCat").value, ref:v("#fRef"), note:v("#fNote") };
+  if (!data.q || !data.answer || data.wrong.some(x => !x)){ setR(msg, "{問題|もんだい}{文|ぶん}、{正解|せいかい}、まちがいの{選択|せんたく}{肢|し}3つをすべて{入|いり}{力|ちから}してください。"); return; }
+  if (new Set([data.answer, ...data.wrong].map(plain)).size < 4){ setR(msg, "{選択|せんたく}{肢|し}が{重複|ちょうふく}しています。4つとも{違|ちが}う{内容|ないよう}にしてください。"); return; }
+  const bk = $("#fBook").value;
+  if (bk){ data.book = bk; data.cat = BOOKS.includes(bk) ? "新約" : "旧約"; }
+  const old = editingId ? questions.find(x => x.id === editingId) : null;
+  const item = { id: old ? old.id : "u" + Date.now().toString(36), ...data, order: old ? old.order : Date.now() };
+  const next = old ? questions.map(x => x.id === old.id ? item : x) : [...questions, item];
+  $("#saveBtn").disabled = true;
+  const ok = await publishList(next, msg);
+  $("#saveBtn").disabled = false;
+  if (ok){ questions = next; }
+});
+$("#delBtn").addEventListener("click", async () => {
+  if (!editingId) return;
+  if (!delArmed){ delArmed = true; setR($("#delBtn"), "もう{一|いち}{度|ど}{押|お}すと{削除|さくじょ}します"); return; }
+  const next = questions.filter(x => x.id !== editingId);
+  const ok = await publishList(next, $("#editMsg"));
+  if (ok){ questions = next; }
+});
+
+
+/* ---------- みんなのランキング(コイノニアのサイトで動きます) ---------- */
+const BAPI = "/api/bible-scores", NICK_KEY = "bible-quiz-nick", DEV_KEY = "bible-quiz-device";
+let boardOn = false, myPid = "";
+function deviceId(){
+  let id = ""; try { id = localStorage.getItem(DEV_KEY) || ""; } catch(e){}
+  if (!id){ id = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()); try { localStorage.setItem(DEV_KEY, id); } catch(e){} }
+  return id;
+}
+async function pidOf(id){
+  const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(id));
+  return [...new Uint8Array(h)].slice(0, 6).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+function getNick(){ try { return localStorage.getItem(NICK_KEY) || ""; } catch(e){ return ""; } }
+function rankOf(total){ let r = null; RANKS.forEach(x => { if (total >= x.n) r = x; }); return r; }
+async function boardPost(){
+  const name = getNick(); if (!boardOn || !name) return null;
+  const r = await fetch(BAPI, { method:"POST", headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ id: deviceId(), name, total: progress.totalCorrect }) });
+  if (!r.ok) throw new Error("post");
+  return r.json();
+}
+async function renderBoard(){
+  const nick = getNick();
+  $("#bNick").value = nick;
+  setR($("#bSave"), nick ? "{変更|へんこう}する" : "{参加|さんか}する");
+  setR($("#boardLead"), "これまでに{正解|せいかい}した{問題|もんだい}の{合計|ごうけい}(るいけい{正解|せいかい}{数|すう})で きそいます。");
+  setR($("#bHint"), nick ? `「${nick}」で{参加|さんか}しています。クイズを{終|お}えるたびに{記録|きろく}が{更新|こうしん}されます。` : "ニックネームを{決|き}めると{参加|さんか}できます。{本名|ほんみょう}は{入|い}れないでください。");
+  const ul = $("#bList"); ul.innerHTML = "<li>" + R("{読|よ}み{込|こ}み{中|ちゅう}…") + "</li>";
+  try {
+    const r = await fetch(BAPI, { cache:"no-store" }); if (!r.ok) throw 0;
+    const rows = await r.json();
+    if (!rows.length){ ul.innerHTML = "<li>" + R("まだ{記録|きろく}がありません。{最初|さいしょ}の1{人|にん}になろう!") + "</li>"; return; }
+    ul.innerHTML = "";
+    rows.slice(0, 30).forEach((x, i) => {
+      const rk = rankOf(x.total), li = document.createElement("li");
+      if (x.pid === myPid) li.className = "me";
+      li.innerHTML = `<span class="bn">${i+1}</span><span class="bt">${esc(x.name)}<small>${rk ? R(rk.ico + " " + rk.name) : ""}</small></span><span class="bs">${x.total}${R("{問|もん}")}</span>`;
+      ul.appendChild(li);
+    });
+  } catch(e){ ul.innerHTML = "<li>" + R("いまは ランキングに つながりません") + "</li>"; }
+}
+$("#boardBtn").addEventListener("click", () => { show("board"); renderBoard(); });
+$("#boardBack").addEventListener("click", () => { show("start"); updateStart(); });
+$("#bSave").addEventListener("click", async () => {
+  const nk = $("#bNick").value.replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 12);
+  if (!nk){ setR($("#bHint"), "ニックネームを{入|い}れてください。"); $("#bNick").focus(); return; }
+  try { localStorage.setItem(NICK_KEY, nk); } catch(e){}
+  $("#bSave").disabled = true;
+  try { await boardPost(); } catch(e){ setR($("#bHint"), "{登録|とうろく}できませんでした。すこし{待|ま}ってから もう{一|いち}{度|ど}ためしてください。"); $("#bSave").disabled = false; return; }
+  $("#bSave").disabled = false;
+  renderBoard();
+});
+async function boardAfterGame(){
+  const el = $("#boardMsg"); el.hidden = true;
+  if (!boardOn) return;
+  if (!getNick()){ el.hidden = false; setR(el, "🏆 ニックネームを{決|き}めると、みんなのランキングに{参加|さんか}できます(はじめの{画面|がめん}から)"); return; }
+  try { const res = await boardPost(); if (res && res.rank > 0){ el.hidden = false; setR(el, `🏆 みんなのランキング ${res.rank}{位|い}(るいけい ${progress.totalCorrect}{問|もん})`); } } catch(e){}
+}
+(async function initBoard(){
+  if (!/^https?:$/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
+  try { const r = await fetch(BAPI, { cache:"no-store" }); if (!r.ok) return; } catch(e){ return; }
+  boardOn = true; $("#boardBtn").hidden = false;
+  try { myPid = await pidOf(deviceId()); } catch(e){}
+})();
+
+/* ---------- init ---------- */
+applyRuby();
+updateStart();
+(async function init(){
+  const C = window.claude;
+  if (!C || typeof C.use !== "function") return;
+  let user = null;
+  try { user = await C.use("user"); } catch(e){}
+  try { artifactNS = await C.use("artifact"); } catch(e){}
+  if (user && artifactNS){
+    try { canEditQ = (await user.canEdit()) || (await user.isOwner()); } catch(e){}
+  }
+  updateStart();
+})();
+</script>
+</body>
+</html>
