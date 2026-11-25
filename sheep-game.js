@@ -9,6 +9,56 @@
     again:'もう一度あそぶ', bleat:'メェ〜', hint:'ヒント'
   }, window.SHEEP_I18N||{});
   function f(s,o){return s.replace(/\{(\w+)\}/g,function(_,k){return o[k];});}
+
+  /* ---------- みんなのランキング(/api/sheep-scores) ---------- */
+  var RK={
+    ja:{rank:'みんなのランキング(合計タイム)',ph:'ニックネーム(12文字まで)',send:'ランキングに登録',note:'ニックネームと合計タイムだけが表示されます。本名は入れないでください。',done:'登録しました!いまは {r} 位',kept:'自己ベストはそのまま({r} 位)',load:'読み込み中…',off:'いまはランキングにつながりません',empty:'まだ記録がありません。最初の1人になろう!',need:'ニックネームを入れてください',fail:'登録できませんでした。少し待ってもう一度お試しください'},
+    en:{rank:'Leaderboard (total time)',ph:'Nickname (up to 12 characters)',send:'Add to leaderboard',note:'Only your nickname and total time are shown. Please do not use your real name.',done:'Added! You are #{r}',kept:'Your best time stays (#{r})',load:'Loading…',off:'The leaderboard is not available right now',empty:'No records yet. Be the first!',need:'Please enter a nickname',fail:'Could not add your score. Please wait a moment and try again'},
+    es:{rank:'Clasificación (tiempo total)',ph:'Apodo (hasta 12 caracteres)',send:'Agregar a la clasificación',note:'Solo se muestran tu apodo y tu tiempo total. No uses tu nombre real.',done:'¡Agregado! Estás en el puesto {r}',kept:'Se mantiene tu mejor tiempo (puesto {r})',load:'Cargando…',off:'La clasificación no está disponible ahora',empty:'Todavía no hay récords. ¡Sé el primero!',need:'Escribe un apodo',fail:'No se pudo agregar. Espera un momento e inténtalo de nuevo'},
+    id:{rank:'Papan peringkat (total waktu)',ph:'Nama panggilan (maks. 12 karakter)',send:'Masukkan ke peringkat',note:'Hanya nama panggilan dan total waktu yang ditampilkan. Jangan pakai nama asli.',done:'Berhasil! Peringkat kamu #{r}',kept:'Waktu terbaikmu tetap (#{r})',load:'Memuat…',off:'Papan peringkat belum bisa dibuka sekarang',empty:'Belum ada catatan. Jadilah yang pertama!',need:'Isi nama panggilan dulu',fail:'Gagal mengirim. Tunggu sebentar lalu coba lagi'},
+    ko:{rank:'모두의 랭킹 (합계 시간)',ph:'닉네임 (12자까지)',send:'랭킹에 등록',note:'닉네임과 합계 시간만 표시됩니다. 실명은 쓰지 마세요.',done:'등록했어요! 지금 {r}위',kept:'최고 기록은 그대로예요 ({r}위)',load:'불러오는 중…',off:'지금은 랭킹에 연결할 수 없어요',empty:'아직 기록이 없어요. 첫 번째가 되어 보세요!',need:'닉네임을 입력해 주세요',fail:'등록하지 못했어요. 잠시 후 다시 시도해 주세요'},
+    pt:{rank:'Ranking (tempo total)',ph:'Apelido (até 12 caracteres)',send:'Registrar no ranking',note:'Só o apelido e o tempo total aparecem. Não use seu nome verdadeiro.',done:'Registrado! Você está em {r}º',kept:'Seu melhor tempo continua ({r}º)',load:'Carregando…',off:'O ranking não está disponível agora',empty:'Ainda não há recordes. Seja o primeiro!',need:'Digite um apelido',fail:'Não foi possível registrar. Espere um pouco e tente de novo'},
+    tl:{rank:'Leaderboard (kabuuang oras)',ph:'Palayaw (hanggang 12 titik)',send:'Ilagay sa leaderboard',note:'Palayaw at kabuuang oras lang ang ipapakita. Huwag gamitin ang tunay mong pangalan.',done:'Naidagdag! Ikaw ay #{r}',kept:'Nanatili ang pinakamabilis mong oras (#{r})',load:'Naglo-load…',off:'Hindi mabuksan ang leaderboard ngayon',empty:'Wala pang record. Ikaw na ang mauna!',need:'Maglagay ng palayaw',fail:'Hindi naidagdag. Maghintay sandali at subukan muli'},
+    'zh-hans':{rank:'大家的排行榜(总时间)',ph:'昵称(最多12个字)',send:'登记到排行榜',note:'只显示昵称和总时间。请不要填写真实姓名。',done:'登记成功!现在第 {r} 名',kept:'最佳成绩保持不变(第 {r} 名)',load:'读取中…',off:'现在无法连接排行榜',empty:'还没有记录。来当第一个吧!',need:'请输入昵称',fail:'登记失败,请稍后再试'},
+    'zh-hant':{rank:'大家的排行榜(總時間)',ph:'暱稱(最多12個字)',send:'登記到排行榜',note:'只顯示暱稱和總時間。請不要填寫真實姓名。',done:'登記成功!現在第 {r} 名',kept:'最佳成績保持不變(第 {r} 名)',load:'讀取中…',off:'現在無法連接排行榜',empty:'還沒有紀錄。來當第一個吧!',need:'請輸入暱稱',fail:'登記失敗,請稍後再試'}
+  };
+  function rkLang(){var l=(document.documentElement.lang||'ja').toLowerCase();if(l.indexOf('zh')===0)return /hant|tw|hk/.test(l)?'zh-hant':'zh-hans';l=l.split('-')[0];return RK[l]?l:'ja';}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function makeBoard(stage,secFmt){
+    var L=rkLang(),R=RK[L],API='/api/sheep-scores',nickKey='koinonia-sheep-nick';
+    if(!/^https?:$/.test(location.protocol)) return null;
+    var box=document.createElement('div');box.className='g-rank';
+    box.style.cssText='margin:14px auto 0;max-width:640px;background:#fffdf6;border:1px solid #e6dcc4;border-radius:14px;padding:12px 14px;color:#1F3550;text-align:left';
+    box.innerHTML='<b style="display:block;margin-bottom:6px">🐑 '+esc(R.rank)+'</b><div class="g-rk-form" hidden></div><ol class="g-rk-list" style="margin:6px 0 0;padding-left:1.8em;font-size:.95rem;line-height:1.7"></ol><p class="g-rk-msg" style="margin:4px 0 0;font-size:.85rem;color:#2C4560"></p>';
+    stage.parentNode.insertBefore(box,stage.nextSibling);
+    var list=box.querySelector('.g-rk-list'),form=box.querySelector('.g-rk-form'),msg=box.querySelector('.g-rk-msg'),me='';
+    try{me=localStorage.getItem(nickKey)||'';}catch(e){}
+    function load(){
+      list.innerHTML='<li style="list-style:none;margin-left:-1.8em">'+esc(R.load)+'</li>';
+      return fetch(API,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(rows){
+        if(!rows.length){list.innerHTML='<li style="list-style:none;margin-left:-1.8em">'+esc(R.empty)+'</li>';return;}
+        list.innerHTML=rows.slice(0,10).map(function(x){var b=x.name===me;return '<li'+(b?' style="font-weight:bold;background:#FFF3C9;border-radius:6px"':'')+'>'+esc(x.name)+' — '+esc(secFmt(x.time))+'</li>';}).join('');
+      }).catch(function(){list.innerHTML='<li style="list-style:none;margin-left:-1.8em">'+esc(R.off)+'</li>';});
+    }
+    function offer(total){
+      form.hidden=false;msg.textContent='';
+      form.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" maxlength="12" autocomplete="nickname" style="flex:1;min-width:10em;font:inherit;padding:8px 10px;border:1px solid #cdbf9e;border-radius:10px" placeholder="'+esc(R.ph)+'" value="'+esc(me)+'" aria-label="'+esc(R.ph)+'"><button type="button" class="btn sun">'+esc(R.send)+'</button></div><p style="margin:6px 0 0;font-size:.8rem;color:#5a6b80">'+esc(R.note)+'</p>';
+      var inp=form.querySelector('input'),go=form.querySelector('button');
+      go.onclick=function(){
+        var nk=(inp.value||'').replace(/[\u0000-\u001f<>]/g,'').trim().slice(0,12);
+        if(!nk){msg.textContent=R.need;inp.focus();return;}
+        me=nk;try{localStorage.setItem(nickKey,nk);}catch(e){}
+        go.disabled=true;
+        fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nk,time:Math.round(total*10)/10,lang:L})})
+          .then(function(r){if(!r.ok)throw 0;return r.json();})
+          .then(function(res){form.hidden=true;msg.textContent=f(res.improved?R.done:R.kept,{r:res.rank});load();})
+          .catch(function(){go.disabled=false;msg.textContent=R.fail;});
+      };
+    }
+    function hideForm(){form.hidden=true;}
+    load();
+    return {offer:offer,hide:hideForm};
+  }
   function init(){
     var cv=document.getElementById('g-canvas'); if(!cv||cv.dataset.ready) return; cv.dataset.ready='1';
     var ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
@@ -18,6 +68,7 @@
     var ROUNDS=5, round=0, total=0, start=0, playing=false, scene=null, marks=[], lastBleat=0, bleatUntil=0, hintUntil=0;
     cv.style.touchAction='manipulation';
     var best=null; try{var v=localStorage.getItem('koinonia-sheep-best'); if(v) best=parseFloat(v);}catch(e){}
+    var board=makeBoard(document.getElementById('g-stage')||cv.parentNode,function(t){return f(T.sec,{s:Number(t).toFixed(1)});});
     function showBest(){bEl.textContent=f(T.best,{b:best?f(T.sec,{s:best.toFixed(1)}):T.none});}
     showBest();
     function R(a,b){return a+Math.random()*(b-a);}
@@ -99,6 +150,7 @@
       requestAnimationFrame(frame);
     }
     function startRound(){
+      if(board&&round===0) board.hide();
       scene=makeScene(round); marks=[]; playing=true; start=performance.now(); over.hidden=true; lastBleat=0;
       rEl.textContent=f(T.round,{n:round+1,t:ROUNDS});
     }
@@ -118,6 +170,7 @@
           var isBest=!best||total<best; if(isBest){best=total; try{localStorage.setItem('koinonia-sheep-best',String(best));}catch(err){} showBest();}
           title.textContent=f(T.allFound,{s:total.toFixed(1)})+(isBest?T.newBest:'');
           msg.textContent=T.finalMsg; btn.textContent=T.again;
+          if(board) board.offer(total);
           rEl.textContent=f(T.round,{n:ROUNDS,t:ROUNDS});
         }
         tEl.textContent=f(T.sec,{s:total.toFixed(1)});
