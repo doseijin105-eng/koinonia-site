@@ -15,7 +15,7 @@
 - キャラクターの絵:`<勇士>_idle / run1-3 / spin1-6 / hurt / win .webp`(ヨシェブだけ接頭辞なし)
 - エフェクト:`fx_dash / fx_spear / fx_snow / fx_stomp .webp`、必殺技:`cutin_bg.jpg`・`<勇士>_cutin.webp`
 - BGM:`assets/music/bgm_title / bgm_story / bgm_crown / bgm_ta / bgm_surv / bgm_field / bgm_boss .mp3`、ジングル:`jingle_clear / jingle_special / jingle_over .mp3`
-- 元ファイル:Googleドライブ「ゲーム素材 / 一騎当八百」、進み具合は「一騎当八百 なかま・素材管理表」
+- 元ファイル:Googleドライブ「自作アプリ › ゲーム制作(素材・管理) / 一騎当八百」、進み具合は「一騎当八百 なかま・素材管理表」
 
 ## みんなのランキング
 - `/api/ikki-scores`(`netlify/functions/ikki-scores.mjs`)。ボード:`ta`(タイム少ない順)・`surv`(スコア)・`field`(WAVE)
