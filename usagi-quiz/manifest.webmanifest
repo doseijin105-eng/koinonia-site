@@ -1,0 +1,23 @@
+{
+  "name": "モフ博士のうさぎクイズ",
+  "short_name": "うさぎクイズ",
+  "description": "うさぎの豆知識・品種あてクイズと、初級〜上級のうさぎ検定。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef3ea",
+  "theme_color": "#3f7a4a",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "クイズで遊ぶ", "url": "./#quiz"},
+    {"name": "うさぎ検定", "url": "./#exam"},
+    {"name": "品種図鑑", "url": "./#zukan"}
+  ]
+}
